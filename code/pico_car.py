@@ -85,41 +85,52 @@ tof1 = setup_tof_sensor(1, 14, 15)  # rear sensor
 tof0.start()
 tof1.start()
 
-# Motor control parameters
-nom_spd = 45_000
-kp = 1500  # Proportional PID coefficient
-kd = 800   # Derivative PID coefficient
-p_trim = 0
-d_trim = 0
-yaw_prev = 0
+def go_until_wall(space):
+    """Go until front sensor distance == space (mm)"""
+    # Motor control parameters
+    nom_spd = 45_000
+    kp = 1500  # Proportional PID coefficient
+    kd = 2500  # Derivative PID coefficient (dissipative)
+    p_trim = 0
+    d_trim = 0
+    p_trim_limit = 10_000
+    yaw_prev = 0
 
-try:
-    d1 = tof1.read()
-    set_mtr_dirs('REV', 'REV')
-    set_mtr_spds(nom_spd, nom_spd)
-    while  d1 > 250:
+    try:
         d1 = tof1.read()
-        yaw, r, p, x, y, z = rvc.heading
-        p_trim = int(yaw * kp)
-        d_trim = int( (yaw - yaw_prev) * kd)
-        yaw_prev = yaw
-        a_spd = nom_spd - p_trim - d_trim
-        b_spd = nom_spd + p_trim + d_trim
-        print(yaw, d1, a_spd, b_spd, p_trim, d_trim)
-        set_mtr_spds(a_spd, b_spd)
-        time.sleep(0.01)
-    set_mtr_dirs('OFF', 'OFF')
-    print('stop')
-    
-    # Print some values as car coasts to a complete stop
-    for cycle in range(15):
-        d1 = tof1.read()
-        yaw, p, r, x, y, z = rvc.heading
-        print(yaw, d1)
-        time.sleep(0.01)
-finally:
-    led.off()
-    tof0.stop()
-    tof1.stop()
-    set_mtr_dirs('OFF', 'OFF')
-    set_mtr_spds(0, 0)
+        set_mtr_dirs('REV', 'REV')
+        set_mtr_spds(nom_spd, nom_spd)
+        while  d1 > space:
+            d1 = tof1.read()
+            yaw, r, p, x, y, z = rvc.heading
+            p_trim = int(yaw * kp)
+            if p_trim > p_trim_limit:
+                p_trim = p_trim_limit
+            elif p_trim < -p_trim_limit:
+                p_trim = -p_trim_limit
+            d_trim = int( (yaw - yaw_prev) * kd)
+            yaw_prev = yaw
+            a_spd = nom_spd - p_trim - d_trim
+            b_spd = nom_spd + p_trim + d_trim
+            print(yaw, d1, a_spd, b_spd, p_trim, d_trim)
+            set_mtr_spds(a_spd, b_spd)
+            time.sleep(0.01)
+        set_mtr_dirs('OFF', 'OFF')
+        print('stop')
+        
+        # Print some values as car coasts to a complete stop
+        for cycle in range(15):
+            d1 = tof1.read()
+            yaw, p, r, x, y, z = rvc.heading
+            print(yaw, d1)
+            time.sleep(0.01)
+    finally:
+        led.off()
+        tof0.stop()
+        tof1.stop()
+        set_mtr_dirs('OFF', 'OFF')
+        set_mtr_spds(0, 0)
+
+
+if __name__ == "__main__":
+    go_until_wall(250)
