@@ -85,8 +85,8 @@ tof1 = setup_tof_sensor(1, 14, 15)  # rear sensor
 tof0.start()
 tof1.start()
 
-def go_until_wall(space):
-    """Go until front sensor distance == space (mm)"""
+def go_back_to_wall(space):
+    """Go until back sensor distance == space (mm)"""
     # Motor control parameters
     nom_spd = 45_000
     kp = 1500  # Proportional PID coefficient
@@ -133,4 +133,4 @@ def go_until_wall(space):
 
 
 if __name__ == "__main__":
-    go_until_wall(250)
+    go_back_to_wall(250)
