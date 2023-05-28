@@ -52,22 +52,28 @@
 
 ### Add WiFi control
 
-Bob Grant ([Bytes N Bits](https://bytesnbits.co.uk/S)) has produced this series of 3 video tutorials which teach how to build a web interface for controlling a project on the Pi Pico W.
+Bob Grant ([Bytes N Bits](https://bytesnbits.co.uk/S)) has produced this series of [3 video tutorials](https://www.youtube.com/playlist?list=PLvOT6zBnJyYGLmvrJeYzRYwBFa44SVnLZ) which teach how to build a web interface for controlling a project on the Pi Pico W.
 * WiFi Control Your Micropython Project
     * [Youtube video](https://www.youtube.com/watch?v=eym8NpHr9Xw)
-    * [Bytes N Bits website page](https://bytesnbits.co.uk/simple-micropython-wifi-connection/)
+    * [Bytes N Bits web page](https://bytesnbits.co.uk/simple-micropython-wifi-connection/)
     * [Github Repo](https://github.com/getis/pi-pico-w-simple-wifi-setup)
 
 * Web Control Panel Part 1: The web server
     * [Youtube video](https://www.youtube.com/watch?v=h18LMskRNMA)
-    * [Bytes N Bits website page](https://bytesnbits.co.uk/web-control-panel-web-server/)
+    * [Bytes N Bits web page](https://bytesnbits.co.uk/web-control-panel-web-server/)
     * [Github Repo](https://github.com/getis/micropython-web-control-panel)
 
 * Web Control Panel Part 2: Async & Dual Core web server
     * [Youtube video](https://www.youtube.com/watch?v=PY732g2ZN4g)
-    * [Bytes N Bits website page](https://bytesnbits.co.uk/web-control-panel-2-asyncio-dual-core/)
+    * [Bytes N Bits web page](https://bytesnbits.co.uk/web-control-panel-2-asyncio-dual-core/)
     * [Github Repo](https://github.com/getis/micropython-web-control-panel)
 
+* Web Control Panel Part 3: Web Page & Javascript
+    * [Youtube video](https://www.youtube.com/watch?v=Z6g9x170Pvw)
+    * [Bytes N Bits web page](https://bytesnbits.co.uk/web-control-panel-web-page/)
+    * [Github Repo](https://github.com/getis/micropython-web-control-panel)
+
+But first, just to get started, I will use a more primitive, basic wewb control interface.
 Christopher Barnatt shows a very simple [Pi Pico W WiFi Controlled Robot](https://www.explainingcomputers.com/pi_pico_w_robot.html)
 * The robot runs a basic webserver displaying a very simple form with 5 buttons.
 
@@ -137,4 +143,20 @@ I found a collection of [Awesome MicroPython](https://awesome-micropython.com/#r
         * I still haven't received the motors I ordered from AliExpress yet. They aren't due until June 15 which is still 3 weeks away!
         * It is also not clear which motors I will be getting. Possibly the 56:1 motors. I guess I will have to wait and see.
 * I am still using the 5-button web interface (asynchrouous) to control the car. This works OK, but it is pretty bare bones. I might want to explore joystick control and/or adding speed control.
+
+## Learn how to create and display an [onscreen joystick](https://www.cssscript.com/onscreen-joystick/#google_vignette)
+
+Looked online for examples of onscreen joysticks and found a few:
+
+* Roberto D'Amico (bobboteck) [on github](https://github.com/bobboteck/JoyStick)
+    * [Multi-joystick demo](https://bobboteck.github.io/joy/joy.html)
+    * My initial attempt at implementing a [single joystick](/home/doug/pico-projects/joystick/JoyStick-master/joy_single.html)
+    * Google Ad showing [single joystick example](https://www.cssscript.com/demo/onscreen-joystick/)
+* [Another joystick demo](https://jsfiddle.net/aa0et7tr/5/)
+    * [My implementation](/home/doug/pico-projects/joystick/pure_js_joystick/combined.html)
+
+In order to examine and revise these, I first need to spin up on javascript and CSS [W3schools JS Tutorial](https://www.w3schools.com/js/default.asp)
+
+I like the bobboteck example but it has a lot of extra "cruft" associated with showing how to display multiple joysticks. The Google ad does a nice job of getting rid of the unwanted cruft but adds their own extra stuff.
+I copied the source of the Google page into the bobboteck folder [here](/home/doug/pico-projects/joystick/JoyStick-master/google_ad.html) and it works fine. I will try to eliminate the Google Ad stuff while keeping the intrinsic simplicity of the code.
 
