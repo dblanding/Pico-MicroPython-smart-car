@@ -1,13 +1,14 @@
 """
 MicroPython code for Pico car project using:
 * Raspberry Pi Pico mounted on differential drive car
-* Motor encoders used for closed-loop speed control
+* 56:1 gear motors with encoders
 * Asynchrounous webserver enables remote control
 """
 
 import encoder_rp2 as encoder
 import network
 import uasyncio as asyncio
+import _thread
 from machine import Pin, PWM
 import time
 from secrets import secrets
@@ -16,11 +17,11 @@ ssid = secrets['ssid']
 password = secrets['wifi_password']
 
 # Operate motors at a moderate speed
-target_tick_rate = 5000  # ticks per sec
+target_tick_rate = 2_500  # ticks per sec
 
 # Account for intrinsic differences between motors a and b
-mult_a = 5.4
-mult_b = 6.7
+mult_a = 11
+mult_b = 15
 
 # Nominal PWM signal for each motor resulting in straight travel
 mtr_spd_a = int(target_tick_rate * mult_a)
@@ -113,35 +114,6 @@ def set_mtr_spds(a_PWM_val, b_PWM_val):
     enb.duty_u16(b_PWM_val)
 
 def move_forward():
-    mtr_spd = 30_000
-    print('move forward')
-    set_mtr_dirs('FWD', 'FWD')
-    set_mtr_spds(mtr_spd, mtr_spd)
-    start_time = time.ticks_ms()
-    prev_time = start_time
-    time.sleep(0.05)
-    prev_enc_a = enc_a.value()
-    prev_enc_b = enc_b.value()
-    deadline = time.ticks_add(start_time, 2000)  # 2 seconds
-    accum_err_a = []
-    accum_err_b = []
-    while time.ticks_diff(deadline, time.ticks_ms()) > 0:
-        curr_time = time.ticks_ms()
-        curr_enc_a = enc_a.value()
-        curr_enc_b = enc_b.value()
-        delta_enc_a = curr_enc_a - prev_enc_a
-        delta_enc_b = curr_enc_b - prev_enc_b
-        delta_time = curr_time - prev_time
-        prev_time = curr_time
-        prev_enc_a = curr_enc_a
-        prev_enc_b = curr_enc_b
-        tick_rate_a = (delta_enc_a / delta_time) * 1000
-        tick_rate_b = (delta_enc_b / delta_time) * 1000
-        
-        print(tick_rate_a, tick_rate_b)
-        time.sleep(0.1)
-
-def move_forward():
     print('move forward')
     set_mtr_dirs('FWD', 'FWD')
     set_mtr_spds(mtr_spd_a, mtr_spd_b)
@@ -210,6 +182,7 @@ async def serve_client(reader, writer):
         pass
     print("command = ", command)
     if command == '/forward?':
+        # second_thread = _thread.start_new_thread(move_forward, ())
         move_forward()
     elif command =='/left?':
         move_left()
@@ -234,12 +207,31 @@ async def main():
 
     print('Setting up webserver...')
     asyncio.create_task(asyncio.start_server(serve_client, "0.0.0.0", 80))
+    prev_enc_a = 0
+    prev_enc_b = 0
+    start_time = time.ticks_ms()
+    prev_time = start_time
     while True:
         # Flash LED
-        led.on()
-        await asyncio.sleep(0.25)
-        led.off()
-        await asyncio.sleep(2)
+        led.toggle()
+        curr_enc_a = enc_a.value()
+        curr_enc_b = enc_b.value()
+        curr_time = time.ticks_ms()
+        if (curr_enc_a != prev_enc_a) or (curr_enc_b != prev_enc_b):
+            delta_enc_a = curr_enc_a - prev_enc_a
+            delta_enc_b = curr_enc_b - prev_enc_b
+            delta_time = curr_time - prev_time
+            prev_enc_a = curr_enc_a
+            prev_enc_b = curr_enc_b
+            prev_time = curr_time
+            prev_enc_a = curr_enc_a
+            prev_enc_b = curr_enc_b
+            tick_rate_a = (delta_enc_a / delta_time) * 1000
+            tick_rate_b = (delta_enc_b / delta_time) * 1000
+            
+            print(curr_enc_a, curr_enc_b, tick_rate_a, tick_rate_b)
+        
+        await asyncio.sleep(0.1)
 
 try:
     asyncio.run(main())

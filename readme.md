@@ -53,22 +53,22 @@
 ### Add WiFi control
 
 Bob Grant ([Bytes N Bits](https://bytesnbits.co.uk/S)) has produced this series of [3 video tutorials](https://www.youtube.com/playlist?list=PLvOT6zBnJyYGLmvrJeYzRYwBFa44SVnLZ) which teach how to build a web interface for controlling a project on the Pi Pico W.
-* WiFi Control Your Micropython Project
+* WiFi Control Your Micropython Project Using a Web Interface
     * [Youtube video](https://www.youtube.com/watch?v=eym8NpHr9Xw)
     * [Bytes N Bits web page](https://bytesnbits.co.uk/simple-micropython-wifi-connection/)
     * [Github Repo](https://github.com/getis/pi-pico-w-simple-wifi-setup)
 
-* Web Control Panel Part 1: The web server
+* Web Control Panel Part 1: Add a web control panel to your project - the web server
     * [Youtube video](https://www.youtube.com/watch?v=h18LMskRNMA)
     * [Bytes N Bits web page](https://bytesnbits.co.uk/web-control-panel-web-server/)
     * [Github Repo](https://github.com/getis/micropython-web-control-panel)
 
-* Web Control Panel Part 2: Async & Dual Core web server
+* Web Control Panel Part 2: Asyncio & Dual Core web server
     * [Youtube video](https://www.youtube.com/watch?v=PY732g2ZN4g)
     * [Bytes N Bits web page](https://bytesnbits.co.uk/web-control-panel-2-asyncio-dual-core/)
     * [Github Repo](https://github.com/getis/micropython-web-control-panel)
 
-* Web Control Panel Part 3: Web Page & Javascript
+* Web Control Panel Part 3: Web Page & Javascript coding
     * [Youtube video](https://www.youtube.com/watch?v=Z6g9x170Pvw)
     * [Bytes N Bits web page](https://bytesnbits.co.uk/web-control-panel-web-page/)
     * [Github Repo](https://github.com/getis/micropython-web-control-panel)
@@ -158,5 +158,26 @@ Looked online for examples of onscreen joysticks and found a few:
 In order to examine and revise these, I first need to spin up on javascript and CSS [W3schools JS Tutorial](https://www.w3schools.com/js/default.asp)
 
 I like the bobboteck example but it has a lot of extra "cruft" associated with showing how to display multiple joysticks. The Google ad does a nice job of getting rid of the unwanted cruft but adds their own extra stuff.
-I copied the source of the Google page into the bobboteck folder [here](/home/doug/pico-projects/joystick/JoyStick-master/google_ad.html) and it works fine. I will try to eliminate the Google Ad stuff while keeping the intrinsic simplicity of the code.
+
+I copied the source of the Google page into the bobboteck folder [here](/home/doug/pico-projects/joystick/JoyStick-master/google_ad.html) and removed the Google Ad stuff while keeping the intrinsic simplicity of the code. It works fine and seems pretty clean.
+
+Next up, I want to try using this joystick to control the Pico-car.
+
+#### Other joystick projects
+
+![BT Controlled Tank](imgs/BT-controlled-tank.png)
+* [Send joystick data over BT](https://srituhobby.com/how-to-make-a-bluetooth-control-tank-with-raspberry-pi-pico-board/)
+
+## Learning more about javascript and REST APIs
+
+Looking at the javascript code in Bob Grant's code and the javascript code in the joystick examples makes me realize that I don't have a good fundamental understanding about how javascript works. To remedy this, I need to learn more about how javascript frontends work.
+
+* I found [Full Stack Python](https://www.fullstackpython.com/javascript.html) which has some links that look good.
+
+* Also found this RealPython tutorial [Python and REST APIs: Interacting With Web Services](https://realpython.com/api-integration-in-python/)
+
+* Also [Python REST API: Build and Deploy Your Own Custom Server](https://www.xingyulei.com/post/py-http-server/)
+
+* Search on "How to create REST API in Python without flask"
+
 
