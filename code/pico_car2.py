@@ -16,12 +16,15 @@ from secrets import secrets
 ssid = secrets['ssid']
 password = secrets['wifi_password']
 
-# Operate motors at a moderate speed
-target_tick_rate = 2_500  # ticks per sec
+# Set drive_mode to one of: 'F', 'B', 'R', 'L', 'S'
+drive_mode = 'S'  # stop
 
-# Account for intrinsic differences between motors a and b
+# Operate motors at a moderate speed
+target_tick_rate = 4000  # ticks per sec
+
+# Account for intrinsic differences between motor a and b
 mult_a = 11
-mult_b = 15
+mult_b = 14
 
 # Nominal PWM signal for each motor resulting in straight travel
 mtr_spd_a = int(target_tick_rate * mult_a)
@@ -131,14 +134,14 @@ def move_stop():
 def move_left():
     print('turn left')
     set_mtr_dirs('REV', 'FWD')
-    set_mtr_spds(int(mtr_spd_a * 0.7),
-                 int(mtr_spd_b * 0.7))
+    set_mtr_spds(int(mtr_spd_a * 0.5),
+                 int(mtr_spd_b * 0.5))
 
 def move_right():
     print('turn right')
     set_mtr_dirs('FWD', 'REV')
-    set_mtr_spds(int(mtr_spd_a * 0.7),
-                 int(mtr_spd_b * 0.7))
+    set_mtr_spds(int(mtr_spd_a * 0.5),
+                 int(mtr_spd_b * 0.5))
 
 #Stop the robot ASAP
 move_stop()
@@ -168,6 +171,7 @@ def connect():
     return ip
 
 async def serve_client(reader, writer):
+    global drive_mode
     print("Client connected")
     request_line = await reader.readline()
     request_line = str(request_line)
@@ -182,16 +186,15 @@ async def serve_client(reader, writer):
         pass
     print("command = ", command)
     if command == '/forward?':
-        # second_thread = _thread.start_new_thread(move_forward, ())
-        move_forward()
+        drive_mode  = 'F'
     elif command =='/left?':
-        move_left()
+        drive_mode = 'L'
     elif command =='/stop?':
-        move_stop()
+        drive_mode = 'S'
     elif command =='/right?':
-        move_right()
+        drive_mode = 'R'
     elif command =='/back?':
-        move_backward()
+        drive_mode = 'B'
 
     response = html
     writer.write('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
@@ -211,6 +214,7 @@ async def main():
     prev_enc_b = 0
     start_time = time.ticks_ms()
     prev_time = start_time
+    prev_mode = 'S'  # stop
     while True:
         # Flash LED
         led.toggle()
@@ -230,7 +234,19 @@ async def main():
             tick_rate_b = (delta_enc_b / delta_time) * 1000
             
             print(curr_enc_a, curr_enc_b, tick_rate_a, tick_rate_b)
-        
+
+        if drive_mode != prev_mode:
+            prev_mode = drive_mode
+            if drive_mode == 'F':
+                move_forward()
+            elif drive_mode == 'B':
+                move_backward()
+            elif drive_mode == 'R':
+                move_right()
+            elif drive_mode == 'L':
+                move_left()
+            else:
+                move_stop()
         await asyncio.sleep(0.1)
 
 try:

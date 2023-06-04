@@ -134,15 +134,25 @@ I found a collection of [Awesome MicroPython](https://awesome-micropython.com/#r
 
 ## Pause again to evaluate project progress
 
+![Pico Car 2 (top)](imgs/pico-car2_top.jpg)
+![Pico Car 2 (bot)](imgs/pico-car2_bot.jpg)
+
 * The car has been completely rebuilt to replace the little yellow smart car motors with the Tumbller motors. However, the new motors still have intrinsic differences that cause the car to turn excessively when intending to drive straight with the application of equal PWM signals.
 * I replaced the 4-pack of AA batteries with a LiPo 3S 50C battery. This was to remedy the problem that as the AA batteries got a little tired, the 5V PS on the L298N was unable to provide 5V out and therefore was unable to power the Pico.
-    * The problem with the L293N P/S was solved, but now the motors run much **faster** than they need to, so in order to operate at a moderte speed, a lower PWM signal is needed.
-* For now, I drive the motors at a target tick rate of 5000 ticks/sec by applying an individual multiplier for each motor to arrive at a PWM signal that runs them both at approximately the same speed.
-    * The PWM signals are in the vicinity of 30_000 (max value = 65,536)
-    * From this, it is clear that using a higher gear reduction (such as 56:1) would be preferable as it would allow better slow speed performance (as needed for in place turns) while still being capable of moderate speed during straight line operation.
-        * I still haven't received the motors I ordered from AliExpress yet. They aren't due until June 15 which is still 3 weeks away!
-        * It is also not clear which motors I will be getting. Possibly the 56:1 motors. I guess I will have to wait and see.
-* I am still using the 5-button web interface (asynchrouous) to control the car. This works OK, but it is pretty bare bones. I might want to explore joystick control and/or adding speed control.
+    * This solved the problem with the L293N P/S, but now the motors run much **faster** than they need to, so in order to operate at a moderate speed, a lower PWM signal is needed.
+
+
+* I have received and installed the motors I ordered from AliExpress. (3 week from order to arrival)
+    * It turns out they are the 56:1 motors.
+    * This gear reduction works very well.
+        * The cruising speed of the car is fine with the LiPo battery 
+        * In-place turning works great with lower PWM values.
+        * Decided to order another pair (spares)
+    * For now, I drive the motors at a target tick rate of 4000 ticks/sec by applying an individual multiplier for each motor to arrive at a PWM signal that runs them both at approximately the same speed.
+        * The PWM signals are in the vicinity of 50_000 (max value = 65,536)
+
+* I am still using the 5-button web interface (asynchrouous) to control the car. This works OK, but it is pretty bare bones. I might want to explore a joystick for speed and direction control.
+* I removed the VCSEL sensors and the IMU (for now) while I focus on getting the motors to use PID feedback from the encoders to drive at a target tick rate.
 
 ## Learn how to create and display an [onscreen joystick](https://www.cssscript.com/onscreen-joystick/#google_vignette)
 
@@ -178,6 +188,8 @@ Looking at the javascript code in Bob Grant's code and the javascript code in th
 
 * Also [Python REST API: Build and Deploy Your Own Custom Server](https://www.xingyulei.com/post/py-http-server/)
 
-* Search on "How to create REST API in Python without flask"
+* More Google searches on:
+    * "How to create REST API in Python without flask"
+    * "micropython rest api pico"
 
 
