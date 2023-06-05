@@ -3,15 +3,20 @@ MicroPython code for Pico car project using:
 * Raspberry Pi Pico mounted on differential drive car
 * 56:1 gear motors with encoders
 * Asynchrounous webserver enables remote control
+* motor.Motor() introduced
+    * encapsulate PID encoder feedback to control motor speed
+    * used only in FWD mode
 """
 
 import encoder_rp2 as encoder
+import gc
 import network
 import uasyncio as asyncio
 import _thread
 from machine import Pin, PWM
 import time
 from secrets import secrets
+from motor import Motor
 
 ssid = secrets['ssid']
 password = secrets['wifi_password']
@@ -117,28 +122,28 @@ def set_mtr_spds(a_PWM_val, b_PWM_val):
     enb.duty_u16(b_PWM_val)
 
 def move_forward():
-    print('move forward')
+    # print('move forward')
     set_mtr_dirs('FWD', 'FWD')
-    set_mtr_spds(mtr_spd_a, mtr_spd_b)
+    # set_mtr_spds(mtr_spd_a, mtr_spd_b)
 
 def move_backward():
-    print('move backward')
+    # print('move backward')
     set_mtr_dirs('REV', 'REV')
     set_mtr_spds(mtr_spd_a, int(mtr_spd_b))
 
 def move_stop():
-    print('STOP')
+    # print('STOP')
     set_mtr_dirs('OFF', 'OFF')
     set_mtr_spds(0, 0)
 
 def move_left():
-    print('turn left')
+    # print('turn left')
     set_mtr_dirs('REV', 'FWD')
     set_mtr_spds(int(mtr_spd_a * 0.5),
                  int(mtr_spd_b * 0.5))
 
 def move_right():
-    print('turn right')
+    # print('turn right')
     set_mtr_dirs('FWD', 'REV')
     set_mtr_spds(int(mtr_spd_a * 0.5),
                  int(mtr_spd_b * 0.5))
@@ -172,10 +177,10 @@ def connect():
 
 async def serve_client(reader, writer):
     global drive_mode
-    print("Client connected")
+    # print("Client connected")
     request_line = await reader.readline()
     request_line = str(request_line)
-    print("Request:", request_line)
+    # print("Request:", request_line)
     # We are not interested in HTTP request headers, skip them
     while await reader.readline() != b"\r\n":
         pass
@@ -202,7 +207,7 @@ async def serve_client(reader, writer):
 
     await writer.drain()
     await writer.wait_closed()
-    print("Client disconnected")
+    # print("Client disconnected")
 
 async def main():
     print('Connecting to Network...')
@@ -210,34 +215,19 @@ async def main():
 
     print('Setting up webserver...')
     asyncio.create_task(asyncio.start_server(serve_client, "0.0.0.0", 80))
-    prev_enc_a = 0
-    prev_enc_b = 0
     start_time = time.ticks_ms()
     prev_time = start_time
     prev_mode = 'S'  # stop
     while True:
         # Flash LED
         led.toggle()
-        curr_enc_a = enc_a.value()
-        curr_enc_b = enc_b.value()
-        curr_time = time.ticks_ms()
-        if (curr_enc_a != prev_enc_a) or (curr_enc_b != prev_enc_b):
-            delta_enc_a = curr_enc_a - prev_enc_a
-            delta_enc_b = curr_enc_b - prev_enc_b
-            delta_time = curr_time - prev_time
-            prev_enc_a = curr_enc_a
-            prev_enc_b = curr_enc_b
-            prev_time = curr_time
-            prev_enc_a = curr_enc_a
-            prev_enc_b = curr_enc_b
-            tick_rate_a = (delta_enc_a / delta_time) * 1000
-            tick_rate_b = (delta_enc_b / delta_time) * 1000
-            
-            print(curr_enc_a, curr_enc_b, tick_rate_a, tick_rate_b)
-
+        
         if drive_mode != prev_mode:
             prev_mode = drive_mode
+            gc.collect()
             if drive_mode == 'F':
+                mtr_a = Motor(target_tick_rate)
+                mtr_b = Motor(target_tick_rate)
                 move_forward()
             elif drive_mode == 'B':
                 move_backward()
@@ -245,8 +235,13 @@ async def main():
                 move_right()
             elif drive_mode == 'L':
                 move_left()
-            else:
+            elif drive_mode == 'S':
                 move_stop()
+        if drive_mode == 'F':
+            pwm_a = mtr_a.update(enc_a.value())
+            pwm_b = mtr_b.update(enc_b.value())
+            set_mtr_spds(pwm_a, pwm_b)
+
         await asyncio.sleep(0.1)
 
 try:
