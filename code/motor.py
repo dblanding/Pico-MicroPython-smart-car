@@ -1,8 +1,8 @@
 import time
 
 class Motor():
-    def __init__(self, target_rate, KP=-0.0008, KI=0, KD=0):
-        self.multiplier = 11
+    def __init__(self, target_rate, multiplier, KP=-0.0008, KI=0, KD=0):
+        self.multiplier = multiplier
         self.prev_cnt = 0
         self.prev_rate = 0
         self.prev_time = time.ticks_ms()
@@ -23,6 +23,10 @@ class Motor():
         if elapsed_time > 500:
             delta_time = curr_time - self.prev_time
             delta_cnt = tick_cnt - self.prev_cnt
+            
+            # If driving backwards, speed is still positive
+            delta_cnt = abs(delta_cnt)
+
             self.prev_time = curr_time
             self.prev_cnt = tick_cnt
             if delta_time == 0:
@@ -45,7 +49,7 @@ class Motor():
 
             nominal = self.target_rate * self.multiplier
             pwm_val = int(nominal + p_trim + i_trim + d_trim)
-            print(rate, proportional_error, self.multiplier, integral_error)
+            print(rate, self.multiplier, proportional_error, integral_error)
             if pwm_val > 65_560:
                 pwm_val = 65_560
         else:

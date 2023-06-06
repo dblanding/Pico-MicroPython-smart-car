@@ -27,6 +27,9 @@ drive_mode = 'S'  # stop
 # Operate motors at a moderate speed
 target_tick_rate = 4000  # ticks per sec
 
+# Set motor speed during in-place turns
+turn_spd = target_tick_rate * 6
+
 # Account for intrinsic differences between motor a and b
 mult_a = 11
 mult_b = 14
@@ -72,14 +75,14 @@ html = """<!DOCTYPE html>
 </html>
 """
 
+# setup encoders
 enc_b = encoder.Encoder(0, Pin(2))
 enc_a = encoder.Encoder(1, Pin(0))
-
 
 # setup onboard LED
 led = Pin("LED", Pin.OUT, value=0)
 
-# pins connected to L298N Motor Drive Controller Board
+# setup pins connected to L298N Motor Drive Controller Board
 ena = PWM(Pin(21))
 in1 = Pin(20, Pin.OUT, value=0)
 in2 = Pin(19, Pin.OUT, value=0)
@@ -129,24 +132,22 @@ def move_forward():
 def move_backward():
     # print('move backward')
     set_mtr_dirs('REV', 'REV')
-    set_mtr_spds(mtr_spd_a, int(mtr_spd_b))
+    # set_mtr_spds(mtr_spd_a, int(mtr_spd_b))
 
 def move_stop():
     # print('STOP')
     set_mtr_dirs('OFF', 'OFF')
     set_mtr_spds(0, 0)
 
-def move_left():
+def turn_left():
     # print('turn left')
     set_mtr_dirs('REV', 'FWD')
-    set_mtr_spds(int(mtr_spd_a * 0.5),
-                 int(mtr_spd_b * 0.5))
+    set_mtr_spds(turn_spd, turn_spd)
 
-def move_right():
+def turn_right():
     # print('turn right')
     set_mtr_dirs('FWD', 'REV')
-    set_mtr_spds(int(mtr_spd_a * 0.5),
-                 int(mtr_spd_b * 0.5))
+    set_mtr_spds(turn_spd, turn_spd)
 
 #Stop the robot ASAP
 move_stop()
@@ -221,26 +222,36 @@ async def main():
     while True:
         # Flash LED
         led.toggle()
-        
+
+        # Drive motors
         if drive_mode != prev_mode:
             prev_mode = drive_mode
             gc.collect()
             if drive_mode == 'F':
-                mtr_a = Motor(target_tick_rate)
-                mtr_b = Motor(target_tick_rate)
+                mtr_a = Motor(target_tick_rate, 12)
+                mtr_b = Motor(target_tick_rate, 14)
                 move_forward()
             elif drive_mode == 'B':
+                mtr_a = Motor(target_tick_rate, 13)
+                mtr_b = Motor(target_tick_rate, 14)
                 move_backward()
             elif drive_mode == 'R':
-                move_right()
+                turn_right()
             elif drive_mode == 'L':
-                move_left()
+                turn_left()
             elif drive_mode == 'S':
                 move_stop()
         if drive_mode == 'F':
             pwm_a = mtr_a.update(enc_a.value())
             pwm_b = mtr_b.update(enc_b.value())
             set_mtr_spds(pwm_a, pwm_b)
+        elif drive_mode == 'B':
+            pwm_a = mtr_a.update(enc_a.value())
+            pwm_b = mtr_b.update(enc_b.value())
+            set_mtr_spds(pwm_a, pwm_b)
+
+        # Calculate pose (odometrically)
+        # To do...
 
         await asyncio.sleep(0.1)
 
