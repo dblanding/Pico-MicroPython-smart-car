@@ -215,29 +215,36 @@ async def main():
         # Flash LED
         led.toggle()
 
-        # Drive motors
+        # Check to see if drive_mode has just changed
         if drive_mode != prev_mode:
             prev_mode = drive_mode
             gc.collect()
             if drive_mode == 'F':
+                # Instantiate Motor objects
                 mtr_a = Motor(target_tick_rate, 12)
                 mtr_b = Motor(target_tick_rate, 14)
+                
+                # Set direction pins
                 move_forward()
             elif drive_mode == 'B':
+                # Instantiate Motor objects
                 mtr_a = Motor(target_tick_rate, 13)
                 mtr_b = Motor(target_tick_rate, 14)
+                
+                # Set direction pins
                 move_backward()
             elif drive_mode == 'R':
+                # Execute right turn
                 turn_right()
             elif drive_mode == 'L':
+                # Execute left turn
                 turn_left()
             elif drive_mode == 'S':
+                # Stop motors
                 move_stop()
-        if drive_mode == 'F':
-            pwm_a = mtr_a.update(enc_a.value())
-            pwm_b = mtr_b.update(enc_b.value())
-            set_mtr_spds(pwm_a, pwm_b)
-        elif drive_mode == 'B':
+
+        # Use PID encoder feedback to control motor speed
+        if drive_mode in ('F', 'B'):
             pwm_a = mtr_a.update(enc_a.value())
             pwm_b = mtr_b.update(enc_b.value())
             set_mtr_spds(pwm_a, pwm_b)

@@ -23,40 +23,45 @@ class Motor():
             pwm_val = 0
             print('rate Multiplier proportional_err integral_err')
         else:
-            # calculate fresh PWM value at delta_time intervals
-            curr_time = time.ticks_ms()
-            elapsed_time = curr_time - self.start_time
-            delta_time = curr_time - self.prev_time
-            delta_cnt = tick_cnt - self.prev_cnt
-            
-            # If driving backwards, speed is still positive
-            delta_cnt = abs(delta_cnt)
-
-            self.prev_time = curr_time
-            self.prev_cnt = tick_cnt
-            if delta_time == 0:
-                rate = 0
+            # Calculate PWM value
+            if (time.ticks_ms() - self.start_time) < 400:
+                # Disable PID feedback while motor comes up to speed
+                pwm_val = self.target_rate * self.multiplier
             else:
-                rate = (delta_cnt / delta_time) * 1_000
-            proportional_error = rate - self.target_rate
-            p_trim = self.KP * proportional_error
+                # Enable PID feedback loop
+                curr_time = time.ticks_ms()
+                elapsed_time = curr_time - self.start_time
+                delta_time = curr_time - self.prev_time
+                delta_cnt = tick_cnt - self.prev_cnt
+                
+                # If driving backwards, speed is still positive
+                delta_cnt = abs(delta_cnt)
 
-            if delta_time == 0:
-                derivative_error = 0
-            else:
-                derivative_error = (rate - self.prev_rate) / delta_time
-            d_trim = self.KD * derivative_error
+                self.prev_time = curr_time
+                self.prev_cnt = tick_cnt
+                if delta_time == 0:
+                    rate = 0
+                else:
+                    rate = (delta_cnt / delta_time) * 1_000
+                proportional_error = rate - self.target_rate
+                p_trim = self.KP * proportional_error
 
-            integral_error = self._accumulated(proportional_error)
-            i_trim = self.KI * integral_error
+                if delta_time == 0:
+                    derivative_error = 0
+                else:
+                    derivative_error = (rate - self.prev_rate) / delta_time
+                d_trim = self.KD * derivative_error
 
-            self.multiplier += p_trim
+                integral_error = self._accumulated(proportional_error)
+                i_trim = self.KI * integral_error
 
-            nominal = self.target_rate * self.multiplier
-            pwm_val = int(nominal + p_trim + i_trim + d_trim)
-            print(rate, self.multiplier, proportional_error, integral_error)
-            if pwm_val > 65_530:
-                pwm_val = 65_530
+                self.multiplier += p_trim
+
+                nominal = self.target_rate * self.multiplier
+                pwm_val = int(nominal + p_trim + i_trim + d_trim)
+                print(rate, self.multiplier, proportional_error, integral_error)
+                if pwm_val > 65_530:
+                    pwm_val = 65_530
 
         return pwm_val
 

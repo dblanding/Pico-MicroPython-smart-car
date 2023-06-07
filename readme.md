@@ -192,4 +192,7 @@ Looking at the javascript code in Bob Grant's code and the javascript code in th
     * "How to create REST API in Python without flask"
     * "micropython rest api pico"
 
+## Implemented closed loop feedback motor speed control
 
+* Put the joystick idea on the shelf for now.
+* Use encoder pulses in proportional feedback loop to control speed while driving forward and backward
