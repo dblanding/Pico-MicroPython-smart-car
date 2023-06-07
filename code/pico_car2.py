@@ -3,9 +3,8 @@ MicroPython code for Pico car project using:
 * Raspberry Pi Pico mounted on differential drive car
 * 56:1 gear motors with encoders
 * Asynchrounous webserver enables remote control
-* motor.Motor() introduced
-    * encapsulate PID encoder feedback to control motor speed
-    * used only in FWD mode
+* In fwd or back modes, use encoder feedback to drive motors at target speed
+
 """
 
 import encoder_rp2 as encoder
@@ -30,13 +29,6 @@ target_tick_rate = 4000  # ticks per sec
 # Set motor speed during in-place turns
 turn_spd = target_tick_rate * 6
 
-# Account for intrinsic differences between motor a and b
-mult_a = 11
-mult_b = 14
-
-# Nominal PWM signal for each motor resulting in straight travel
-mtr_spd_a = int(target_tick_rate * mult_a)
-mtr_spd_b = int(target_tick_rate * mult_b)
 
 html = """<!DOCTYPE html>
 <html>

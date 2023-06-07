@@ -3,24 +3,29 @@ import time
 class Motor():
     def __init__(self, target_rate, multiplier, KP=-0.0008, KI=0, KD=0):
         self.multiplier = multiplier
-        self.prev_cnt = 0
-        self.prev_rate = 0
-        self.prev_time = time.ticks_ms()
-        self.start_time = time.ticks_ms()
         self.target_rate = target_rate
-        self.rate_list = []
         self.KP = KP
         self.KI = KI
         self.KD = KD
+        self.initialized = False
 
     def update(self, tick_cnt):
-        """return pwm value to send to motor"""
+        """return pwm value to drive motor"""
 
-        curr_time = time.ticks_ms()
-        elapsed_time = curr_time - self.start_time
-        # print('elapsed time', elapsed_time)
-        
-        if elapsed_time > 500:
+        if not self.initialized:
+            # Initialize values on first update
+            self.initialized = True
+            self.prev_cnt = tick_cnt
+            self.prev_rate = 0
+            self.prev_time = time.ticks_ms()
+            self.start_time = time.ticks_ms()
+            self.rate_list = []
+            pwm_val = 0
+            print('rate Multiplier proportional_err integral_err')
+        else:
+            # calculate fresh PWM value at delta_time intervals
+            curr_time = time.ticks_ms()
+            elapsed_time = curr_time - self.start_time
             delta_time = curr_time - self.prev_time
             delta_cnt = tick_cnt - self.prev_cnt
             
@@ -50,11 +55,9 @@ class Motor():
             nominal = self.target_rate * self.multiplier
             pwm_val = int(nominal + p_trim + i_trim + d_trim)
             print(rate, self.multiplier, proportional_error, integral_error)
-            if pwm_val > 65_560:
-                pwm_val = 65_560
-        else:
-            nominal = self.target_rate * self.multiplier
-            pwm_val = int(nominal)
+            if pwm_val > 65_530:
+                pwm_val = 65_530
+
         return pwm_val
 
     def _accumulated(self, rate):
