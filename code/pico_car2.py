@@ -114,8 +114,8 @@ def set_mtr_spds(a_PWM_val, b_PWM_val):
     """set speeds for both a and b motors
     allowable values are u16 integers (< 65_536)"""
 
-    ena.duty_u16(a_PWM_val)
-    enb.duty_u16(b_PWM_val)
+    ena.duty_u16(int(a_PWM_val))
+    enb.duty_u16(int(b_PWM_val))
 
 def move_forward():
     # print('move forward')
@@ -223,8 +223,8 @@ async def main():
             gc.collect()
             if drive_mode == 'F':
                 # Instantiate Motor objects
-                mtr_a = Motor(target_tick_rate, 12)
-                mtr_b = Motor(target_tick_rate, 14)
+                mtr_a = Motor(target_tick_rate, 11)
+                mtr_b = Motor(target_tick_rate, 13.5)
                 
                 # Set direction pins
                 move_forward()

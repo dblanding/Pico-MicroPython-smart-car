@@ -1,7 +1,7 @@
 import time
 
 class Motor():
-    def __init__(self, target_rate, multiplier, KP=-0.0008, KI=0, KD=0):
+    def __init__(self, target_rate, multiplier, KP=-0.001, KD=1.2, KI=0):
         self.multiplier = multiplier
         self.target_rate = target_rate
         self.KP = KP
@@ -21,10 +21,10 @@ class Motor():
             self.start_time = time.ticks_ms()
             self.rate_list = []
             pwm_val = 0
-            print('rate Multiplier proportional_err integral_err')
+            print('rate Multiplier p_trim d_trim')
         else:
             # Calculate PWM value
-            if (time.ticks_ms() - self.start_time) < 400:
+            if (time.ticks_ms() - self.start_time) < 600:
                 # Disable PID feedback while motor comes up to speed
                 pwm_val = self.target_rate * self.multiplier
             else:
@@ -50,6 +50,7 @@ class Motor():
                     derivative_error = 0
                 else:
                     derivative_error = (rate - self.prev_rate) / delta_time
+                    self.prev_rate = rate
                 d_trim = self.KD * derivative_error
 
                 integral_error = self._accumulated(proportional_error)
@@ -59,7 +60,7 @@ class Motor():
 
                 nominal = self.target_rate * self.multiplier
                 pwm_val = int(nominal + p_trim + i_trim + d_trim)
-                print(rate, self.multiplier, proportional_error, integral_error)
+                print(rate, self.multiplier, p_trim, d_trim)
                 if pwm_val > 65_530:
                     pwm_val = 65_530
 
