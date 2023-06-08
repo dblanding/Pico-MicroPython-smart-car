@@ -23,8 +23,9 @@ password = secrets['wifi_password']
 # Set drive_mode to one of: 'F', 'B', 'R', 'L', 'S'
 drive_mode = 'S'  # stop
 
-# Operate motors at a moderate speed
+# Motor parameters
 target_tick_rate = 4000  # ticks per sec
+TICKS_PER_METER = 11_540
 
 # Set motor speed during in-place turns
 turn_spd = target_tick_rate * 6
@@ -203,6 +204,7 @@ async def serve_client(reader, writer):
     # print("Client disconnected")
 
 async def main():
+    global drive_mode
     print('Connecting to Network...')
     connect()
 
@@ -226,6 +228,11 @@ async def main():
                 
                 # Set direction pins
                 move_forward()
+                
+                # save starting value of encoders
+                enc_a_start = enc_a.value()
+                enc_b_start = enc_b.value()
+
             elif drive_mode == 'B':
                 # Instantiate Motor objects
                 mtr_a = Motor(target_tick_rate, 13)
@@ -233,21 +240,46 @@ async def main():
                 
                 # Set direction pins
                 move_backward()
+                
+                # save starting value of encoders
+                enc_a_start = enc_a.value()
+                enc_b_start = enc_b.value()
+
             elif drive_mode == 'R':
                 # Execute right turn
                 turn_right()
+
             elif drive_mode == 'L':
                 # Execute left turn
                 turn_left()
+
             elif drive_mode == 'S':
                 # Stop motors
                 move_stop()
 
-        # Use PID encoder feedback to control motor speed
-        if drive_mode in ('F', 'B'):
-            pwm_a = mtr_a.update(enc_a.value())
-            pwm_b = mtr_b.update(enc_b.value())
-            set_mtr_spds(pwm_a, pwm_b)
+        # Drive forward to distance (m)
+        if drive_mode == 'F':
+            goal_distance = 1  # meter
+            goal_a = enc_a_start + (goal_distance * TICKS_PER_METER)
+            if enc_a.value() < goal_a:
+                pwm_a = mtr_a.update(enc_a.value())
+                pwm_b = mtr_b.update(enc_b.value())
+                set_mtr_spds(pwm_a, pwm_b)
+            else:
+                drive_mode = 'S'
+                move_stop()
+
+        # Drive backward to distance (m)
+        if drive_mode == 'B':
+            goal_distance = 1  # meter
+            goal_a = enc_a_start - (goal_distance * TICKS_PER_METER)
+            if enc_a.value() > goal_a:
+                pwm_a = mtr_a.update(enc_a.value())
+                pwm_b = mtr_b.update(enc_b.value())
+                set_mtr_spds(pwm_a, pwm_b)
+            else:
+                drive_mode = 'S'
+                move_stop()
 
         # Calculate pose (odometrically)
         # To do...

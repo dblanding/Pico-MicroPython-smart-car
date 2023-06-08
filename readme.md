@@ -191,8 +191,23 @@ Looking at the javascript code in Bob Grant's code and the javascript code in th
 * More Google searches on:
     * "How to create REST API in Python without flask"
     * "micropython rest api pico"
+* Decided to put the joystick idea on the shelf for now.
 
-## Implemented closed loop feedback motor speed control
+## Implement closed loop feedback motor speed control
 
-* Put the joystick idea on the shelf for now.
+* Wheel diameter = 2.686 inches (68.22 mm)
 * Use encoder pulses in proportional feedback loop to control speed while driving forward and backward
+* Using `encoder_test.py`, I found 2464 ticks for each revolution of the wheel.
+
+| Factor | Source |
+| ---- | ---- |
+| 56 x | gear reduction |
+| 11 x | number of magnetic poles on rotor |
+|  4 x | detecting both rising and falling siganls from both quadrature sensors |
+| 2464 | Total (ticks per wheel rev) |
+
+| Value | Parameter |
+| ---- | ---- |
+| 0.214 | Wheel circumference (meters) |
+| 11_540 | ticks per meter |
+ 
