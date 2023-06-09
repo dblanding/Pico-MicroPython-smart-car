@@ -16,12 +16,13 @@ from machine import Pin, PWM, UART
 import time
 from secrets import secrets
 from motor import Motor
-from bno08x_rvc import BNO08x_RVC
+from bno08x_rvc import BNO08x_RVC, RVCReadTimeoutError
 
 # setup IMU in RVC mode on UART
 uart = UART(0, baudrate=115200, tx=Pin(0), rx=Pin(1))
-print(uart)
+print(dir(uart))
 rvc = BNO08x_RVC(uart)
+print(dir(rvc))
 yaw, r, p, x, y, z = rvc.heading
 
 ssid = secrets['ssid']
@@ -220,80 +221,98 @@ async def main():
     start_time = time.ticks_ms()
     prev_time = start_time
     prev_mode = 'S'  # stop
+    prev_yaw = 0
+    loop_count = 0
     while True:
-        # Flash LED
-        led.toggle()
+        loop_count += 1
+        
+        # Get data from IMU
+        try:
+            yaw, *_ = rvc.heading
+            prev_yaw = yaw
+        except RVCReadTimeoutError:
+            yaw = prev_yaw
+        print(yaw)
 
-        # Check to see if drive_mode has just changed
-        if drive_mode != prev_mode:
-            prev_mode = drive_mode
-            gc.collect()
+        if loop_count == 10:
+            loop_count = 0
+
+            # Flash LED
+            led.toggle()
+
+            # Check to see if drive_mode has changed
+            if drive_mode != prev_mode:
+                prev_mode = drive_mode
+                gc.collect()
+                if drive_mode == 'F':
+                    # Instantiate Motor objects
+                    mtr_a = Motor(target_tick_rate, 11)
+                    mtr_b = Motor(target_tick_rate, 13.5)
+                    
+                    # Set direction pins
+                    move_forward()
+                    
+                    # save starting value of encoders
+                    enc_a_start = enc_a.value()
+                    enc_b_start = enc_b.value()
+
+                elif drive_mode == 'B':
+                    # Instantiate Motor objects
+                    mtr_a = Motor(target_tick_rate, 13)
+                    mtr_b = Motor(target_tick_rate, 14)
+                    
+                    # Set direction pins
+                    move_backward()
+                    
+                    # save starting value of encoders
+                    enc_a_start = enc_a.value()
+                    enc_b_start = enc_b.value()
+
+                elif drive_mode == 'R':
+                    # Execute right turn
+                    turn_right()
+
+                elif drive_mode == 'L':
+                    # Execute left turn
+                    turn_left()
+
+                elif drive_mode == 'S':
+                    # Stop motors
+                    move_stop()
+
+            # Drive forward to distance (m)
             if drive_mode == 'F':
-                # Instantiate Motor objects
-                mtr_a = Motor(target_tick_rate, 11)
-                mtr_b = Motor(target_tick_rate, 13.5)
-                
-                # Set direction pins
-                move_forward()
-                
-                # save starting value of encoders
-                enc_a_start = enc_a.value()
-                enc_b_start = enc_b.value()
+                goal_distance = 1  # meter
+                goal_a = enc_a_start + (goal_distance * TICKS_PER_METER)
+                if enc_a.value() < goal_a:
+                    pwm_a = mtr_a.update(enc_a.value())
+                    pwm_b = mtr_b.update(enc_b.value())
+                    set_mtr_spds(pwm_a, pwm_b)
+                else:
+                    drive_mode = 'S'
+                    move_stop()
 
-            elif drive_mode == 'B':
-                # Instantiate Motor objects
-                mtr_a = Motor(target_tick_rate, 13)
-                mtr_b = Motor(target_tick_rate, 14)
-                
-                # Set direction pins
-                move_backward()
-                
-                # save starting value of encoders
-                enc_a_start = enc_a.value()
-                enc_b_start = enc_b.value()
+            # Drive backward to distance (m)
+            if drive_mode == 'B':
+                goal_distance = 1  # meter
+                goal_a = enc_a_start - (goal_distance * TICKS_PER_METER)
+                if enc_a.value() > goal_a:
+                    pwm_a = mtr_a.update(enc_a.value())
+                    pwm_b = mtr_b.update(enc_b.value())
+                    set_mtr_spds(pwm_a, pwm_b)
+                else:
+                    drive_mode = 'S'
+                    move_stop()
 
-            elif drive_mode == 'R':
-                # Execute right turn
-                turn_right()
+            # Calculate pose (odometrically)
+            # To do...
 
-            elif drive_mode == 'L':
-                # Execute left turn
-                turn_left()
-
-            elif drive_mode == 'S':
-                # Stop motors
-                move_stop()
-
-        # Drive forward to distance (m)
-        if drive_mode == 'F':
-            goal_distance = 1  # meter
-            goal_a = enc_a_start + (goal_distance * TICKS_PER_METER)
-            if enc_a.value() < goal_a:
-                pwm_a = mtr_a.update(enc_a.value())
-                pwm_b = mtr_b.update(enc_b.value())
-                set_mtr_spds(pwm_a, pwm_b)
-            else:
-                drive_mode = 'S'
-                move_stop()
-
-        # Drive backward to distance (m)
-        if drive_mode == 'B':
-            goal_distance = 1  # meter
-            goal_a = enc_a_start - (goal_distance * TICKS_PER_METER)
-            if enc_a.value() > goal_a:
-                pwm_a = mtr_a.update(enc_a.value())
-                pwm_b = mtr_b.update(enc_b.value())
-                set_mtr_spds(pwm_a, pwm_b)
-            else:
-                drive_mode = 'S'
-                move_stop()
-
-        # Calculate pose (odometrically)
-        # To do...
-
-        await asyncio.sleep(0.1)
+        # short delay time keeps the IMU data fresh
+        # everything else runs every tenth time thru loop 
+        await asyncio.sleep(0.01)
 
 try:
     asyncio.run(main())
 finally:
+    uart.deinit()
     asyncio.new_event_loop()
