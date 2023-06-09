@@ -191,23 +191,29 @@ Looking at the javascript code in Bob Grant's code and the javascript code in th
 * More Google searches on:
     * "How to create REST API in Python without flask"
     * "micropython rest api pico"
-* Decided to put the joystick idea on the shelf for now.
+* Decided to put the joystick idea *on the shelf* for now.
 
 ## Implement closed loop feedback motor speed control
 
-* Wheel diameter = 2.686 inches (68.22 mm)
+* Wheel diameter = 2.682 inches (68.12 mm)
 * Use encoder pulses in proportional feedback loop to control speed while driving forward and backward
 * Using `encoder_test.py`, I found 2464 ticks for each revolution of the wheel.
 
 | Factor | Source |
 | ---- | ---- |
 | 56 x | gear reduction |
-| 11 x | number of magnetic poles on rotor |
-|  4 x | detecting both rising and falling siganls from both quadrature sensors |
+| 11 x | magnetic poles on rotor |
+|  4 x | detecting both rising and falling edges from both quadrature sensors |
 | 2464 | Total (ticks per wheel rev) |
 
 | Value | Parameter |
 | ---- | ---- |
 | 0.214 | Wheel circumference (meters) |
-| 11_540 | ticks per meter |
- 
+| 11_514 | ticks per meter |
+
+* Even after optimizinging PID coefficients, there is still some visually detectable *wiggle* in the car's steering as it begins driving straight forward or backward.
+    * Small wiggles occur as the 2 motors come up to speed, before the feedback loop has had a chance to lock them onto their target speed.
+    * To reduce this steering wiggle, I will try using yaw feedback from the IMU to keep them *together* as they come up to speed.
+    * Moved encoder pins from gpio pins 0, 1, 2, 3 to pins 12, 13, 14, 15
+    * Hooked up BNO085 IMU to default UART (pins 0, 1)
+

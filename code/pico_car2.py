@@ -4,7 +4,7 @@ MicroPython code for Pico car project using:
 * 56:1 gear motors with encoders
 * Asynchrounous webserver enables remote control
 * In fwd or back modes, use encoder feedback to drive motors at target speed
-
+* BNO08x IMU
 """
 
 import encoder_rp2 as encoder
@@ -12,10 +12,17 @@ import gc
 import network
 import uasyncio as asyncio
 import _thread
-from machine import Pin, PWM
+from machine import Pin, PWM, UART
 import time
 from secrets import secrets
 from motor import Motor
+from bno08x_rvc import BNO08x_RVC
+
+# setup IMU in RVC mode on UART
+uart = UART(0, baudrate=115200, tx=Pin(0), rx=Pin(1))
+print(uart)
+rvc = BNO08x_RVC(uart)
+yaw, r, p, x, y, z = rvc.heading
 
 ssid = secrets['ssid']
 password = secrets['wifi_password']
@@ -25,7 +32,7 @@ drive_mode = 'S'  # stop
 
 # Motor parameters
 target_tick_rate = 4000  # ticks per sec
-TICKS_PER_METER = 11_540
+TICKS_PER_METER = 11_514
 
 # Set motor speed during in-place turns
 turn_spd = target_tick_rate * 6
@@ -69,8 +76,8 @@ html = """<!DOCTYPE html>
 """
 
 # setup encoders
-enc_b = encoder.Encoder(0, Pin(2))
-enc_a = encoder.Encoder(1, Pin(0))
+enc_b = encoder.Encoder(0, Pin(14))
+enc_a = encoder.Encoder(1, Pin(12))
 
 # setup onboard LED
 led = Pin("LED", Pin.OUT, value=0)
