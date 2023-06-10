@@ -1,6 +1,13 @@
 import time
 
 class Motor():
+    """
+    Calculate and return PWM signal (uint 16) to acieve:
+    1. Brief open loop operation while motor comes up to speed
+    2. Closed loop operation using encoder feedback
+        to maintain actual tick rate == target tick rate
+    """
+
     def __init__(self, target_rate, multiplier, KP=-0.001, KD=1.2, KI=0):
         self.multiplier = multiplier
         self.target_rate = target_rate
@@ -10,7 +17,11 @@ class Motor():
         self.initialized = False
 
     def update(self, tick_cnt):
-        """return pwm value to drive motor"""
+        """
+        Return pwm value to drive motor
+        
+        error = (actual tick rate - target tick rate)
+        """
 
         if not self.initialized:
             # Initialize values on first update
@@ -67,9 +78,9 @@ class Motor():
         return pwm_val
 
     def _accumulated(self, rate):
-        """return average of last 10 values of rate"""
+        """return sum of last 10 values of rate"""
 
         if len(self.rate_list) == 10:
             _ = self.rate_list.pop(0)
         self.rate_list.append(rate)
-        return sum(self.rate_list) / len(self.rate_list)
+        return sum(self.rate_list)

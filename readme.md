@@ -214,6 +214,12 @@ Looking at the javascript code in Bob Grant's code and the javascript code in th
 * Even after optimizinging PID coefficients, there is still some visually detectable *wiggle* in the car's steering as it begins driving straight forward or backward.
     * Small wiggles occur as the 2 motors come up to speed, before the feedback loop has had a chance to lock them onto their target speed.
     * To reduce this steering wiggle, I will try using yaw feedback from the IMU to keep them *together* as they come up to speed.
+* (Re)installed the BNO08x IMU sensor
     * Moved encoder pins from gpio pins 0, 1, 2, 3 to pins 12, 13, 14, 15
     * Hooked up BNO085 IMU to default UART (pins 0, 1)
+    * Sped up the main loop (delay was 0.1, now 0.01) to get more instantaneous values of `yaw` angle.
+
+> At power-up, the IMU reports `yaw = 0`, thereafter reporting positive (+) values when rotated CW from the starting position.
+
+
 

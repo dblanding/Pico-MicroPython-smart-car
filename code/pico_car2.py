@@ -308,7 +308,7 @@ async def main():
             # To do...
 
         # short delay time keeps the IMU data fresh
-        # everything else runs every tenth time thru loop 
+        # everything else goes every tenth time thru loop 
         await asyncio.sleep(0.01)
 
 try:
