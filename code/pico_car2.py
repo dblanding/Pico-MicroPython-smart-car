@@ -15,14 +15,14 @@ import _thread
 from machine import Pin, PWM, UART
 import time
 from secrets import secrets
-from motor import Motor
+from motors import Motors
 from bno08x_rvc import BNO08x_RVC, RVCReadTimeoutError
 
 # setup IMU in RVC mode on UART
 uart = UART(0, baudrate=115200, tx=Pin(0), rx=Pin(1))
-print(dir(uart))
+# print(dir(uart))
 rvc = BNO08x_RVC(uart)
-print(dir(rvc))
+# print(dir(rvc))
 yaw, r, p, x, y, z = rvc.heading
 
 ssid = secrets['ssid']
@@ -232,7 +232,7 @@ async def main():
             prev_yaw = yaw
         except RVCReadTimeoutError:
             yaw = prev_yaw
-        print(yaw)
+        # print(yaw)
 
         if loop_count == 10:
             loop_count = 0
@@ -243,11 +243,13 @@ async def main():
             # Check to see if drive_mode has changed
             if drive_mode != prev_mode:
                 prev_mode = drive_mode
+                mtrs = None
                 gc.collect()
                 if drive_mode == 'F':
                     # Instantiate Motor objects
-                    mtr_a = Motor(target_tick_rate, 11)
-                    mtr_b = Motor(target_tick_rate, 13.5)
+                    # mtr_a = Motor(target_tick_rate, 11)
+                    # mtr_b = Motor(target_tick_rate, 13.5)
+                    mtrs = Motors(target_tick_rate)
                     
                     # Set direction pins
                     move_forward()
@@ -258,8 +260,9 @@ async def main():
 
                 elif drive_mode == 'B':
                     # Instantiate Motor objects
-                    mtr_a = Motor(target_tick_rate, 13)
-                    mtr_b = Motor(target_tick_rate, 14)
+                    # mtr_a = Motor(target_tick_rate, 13)
+                    # mtr_b = Motor(target_tick_rate, 14)
+                    mtrs = Motors(target_tick_rate, fwd=False)
                     
                     # Set direction pins
                     move_backward()
@@ -271,38 +274,45 @@ async def main():
                 elif drive_mode == 'R':
                     # Execute right turn
                     turn_right()
+                    del(mtrs)
 
                 elif drive_mode == 'L':
                     # Execute left turn
                     turn_left()
+                    del(mtrs)
 
                 elif drive_mode == 'S':
                     # Stop motors
                     move_stop()
+                    del(mtrs)
 
             # Drive forward to distance (m)
             if drive_mode == 'F':
-                goal_distance = 1  # meter
+                goal_distance = 0.9  # meter
                 goal_a = enc_a_start + (goal_distance * TICKS_PER_METER)
                 if enc_a.value() < goal_a:
-                    pwm_a = mtr_a.update(enc_a.value())
-                    pwm_b = mtr_b.update(enc_b.value())
+                    # pwm_a = mtr_a.update(enc_a.value())
+                    # pwm_b = mtr_b.update(enc_b.value())
+                    pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value(), yaw)
                     set_mtr_spds(pwm_a, pwm_b)
                 else:
                     drive_mode = 'S'
                     move_stop()
+                    del(mtrs)
 
             # Drive backward to distance (m)
             if drive_mode == 'B':
-                goal_distance = 1  # meter
+                goal_distance = 0.9  # meter
                 goal_a = enc_a_start - (goal_distance * TICKS_PER_METER)
                 if enc_a.value() > goal_a:
-                    pwm_a = mtr_a.update(enc_a.value())
-                    pwm_b = mtr_b.update(enc_b.value())
+                    # pwm_a = mtr_a.update(enc_a.value())
+                    # pwm_b = mtr_b.update(enc_b.value())
+                    pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value(), yaw)
                     set_mtr_spds(pwm_a, pwm_b)
                 else:
                     drive_mode = 'S'
                     move_stop()
+                    del(mtrs)
 
             # Calculate pose (odometrically)
             # To do...
