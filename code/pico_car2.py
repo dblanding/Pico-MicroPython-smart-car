@@ -3,8 +3,10 @@ MicroPython code for Pico car project using:
 * Raspberry Pi Pico mounted on differential drive car
 * 56:1 gear motors with encoders
 * Asynchrounous webserver enables remote control
-* In fwd or back modes, use encoder feedback to drive motors at target speed
-* BNO08x IMU
+* In fwd or back modes, use encoder feedback to
+    * drive motors at target_tick_rate
+    * for 1 meter
+* BNO08x IMU hooked up but not used
 """
 
 import encoder_rp2 as encoder
@@ -35,7 +37,7 @@ drive_mode = 'S'  # stop
 target_tick_rate = 4000  # ticks per sec
 TICKS_PER_METER = 11_514
 
-# Set motor speed during in-place turns
+# Set motor speed slower during in-place turns
 turn_spd = target_tick_rate * 6
 
 
@@ -128,12 +130,10 @@ def set_mtr_spds(a_PWM_val, b_PWM_val):
 def move_forward():
     # print('move forward')
     set_mtr_dirs('FWD', 'FWD')
-    # set_mtr_spds(mtr_spd_a, mtr_spd_b)
 
 def move_backward():
     # print('move backward')
     set_mtr_dirs('REV', 'REV')
-    # set_mtr_spds(mtr_spd_a, int(mtr_spd_b))
 
 def move_stop():
     # print('STOP')
@@ -219,7 +219,7 @@ async def main():
     print('Setting up webserver...')
     asyncio.create_task(asyncio.start_server(serve_client, "0.0.0.0", 80))
     start_time = time.ticks_ms()
-    prev_time = start_time
+    prev_time = time.ticks_ms()
     prev_mode = 'S'  # stop
     prev_yaw = 0
     loop_count = 0
@@ -246,9 +246,7 @@ async def main():
                 mtrs = None
                 gc.collect()
                 if drive_mode == 'F':
-                    # Instantiate Motor objects
-                    # mtr_a = Motor(target_tick_rate, 11)
-                    # mtr_b = Motor(target_tick_rate, 13.5)
+                    # Instantiate Motors object
                     mtrs = Motors(target_tick_rate)
                     
                     # Set direction pins
@@ -259,9 +257,7 @@ async def main():
                     enc_b_start = enc_b.value()
 
                 elif drive_mode == 'B':
-                    # Instantiate Motor objects
-                    # mtr_a = Motor(target_tick_rate, 13)
-                    # mtr_b = Motor(target_tick_rate, 14)
+                    # Instantiate Motors object
                     mtrs = Motors(target_tick_rate, fwd=False)
                     
                     # Set direction pins
@@ -291,9 +287,7 @@ async def main():
                 goal_distance = 0.9  # meter
                 goal_a = enc_a_start + (goal_distance * TICKS_PER_METER)
                 if enc_a.value() < goal_a:
-                    # pwm_a = mtr_a.update(enc_a.value())
-                    # pwm_b = mtr_b.update(enc_b.value())
-                    pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value(), yaw)
+                    pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value())
                     set_mtr_spds(pwm_a, pwm_b)
                 else:
                     drive_mode = 'S'
@@ -305,9 +299,7 @@ async def main():
                 goal_distance = 0.9  # meter
                 goal_a = enc_a_start - (goal_distance * TICKS_PER_METER)
                 if enc_a.value() > goal_a:
-                    # pwm_a = mtr_a.update(enc_a.value())
-                    # pwm_b = mtr_b.update(enc_b.value())
-                    pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value(), yaw)
+                    pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value())
                     set_mtr_spds(pwm_a, pwm_b)
                 else:
                     drive_mode = 'S'

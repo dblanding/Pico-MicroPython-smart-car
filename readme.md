@@ -221,12 +221,13 @@ Looking at the javascript code in Bob Grant's code and the javascript code in th
 
 > At power-up, the IMU reports `yaw = 0`, thereafter reporting positive (+) values when rotated CW from the starting position.
 
-* After geting the IMU hooked up, I realized that I can use the difference between a_counts and b_counts as a surogtae for yaw.
-* Replaced motor.Motor class with motors.Motors, which performs the PID calculations for both motors and also keeps track of the cumulative tick counts for both, enabling yet another term to the feedback controller:
+* After geting the IMU hooked up, I realized that I can use the difference between a_counts and b_counts as a surrogtae for yaw.
+* Replaced motor.Motor class with motors.Motors, which not only performs the PID calculations for both motors, it adds a 'C' term, making it a PIDC controller. The C term keeps track of the cumulative tick counts for both motors, urging them to stay in lock step.
     * P (proportional)
     * I (integral)
     * D (Derivative)
     * C (count difference a / b)
-* Got this working for Forward operation, but stil not quite right for Back.
+* Got this working in both Forward & Back directions.
+    * performance data in [spreadsheets folder](spreadsheets).
 
 

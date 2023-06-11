@@ -3,28 +3,30 @@ import time
 class Motors():
     """
     Calculate and return PWM signals for both motors using encoder feedback
-    
+    in a PIDC controller:
+        
+    P - Proportional
+    I - Integral
+    D - Derivative
+    C - Count difference (a/b)
+
     """
 
     def __init__(self, target_tick_rate, fwd=True, multiplier=11,
-                 EKP=-0.002, EKI=-0.001, EKD=-0.05, EKC=-0.01,
-                 YKP=-0.1, YKD=-0.001):
+                 EKP=-0.002, EKI=-0.001, EKD=-0.05, EKC=-0.01):
         self.multiplier = multiplier
         self.ttr = target_tick_rate
-        self.fwd = True
+        self.fwd = fwd
         self.rate_list_a = []
         self.rate_list_b = []
         # encoder control loop coefficients
         self.EKP = EKP  # proportional
         self.EKI = EKI  # integral
         self.EKD = EKD  # derivative
-        self.EKC = EKC  # count error
-        # yaw control loop coefficients
-        self.YKP = YKP  # proportional
-        self.YKD = YKD  # derivative
+        self.EKC = EKC  # count difference
         self.initialized = False
 
-    def update(self, curr_cnt_a, curr_cnt_b, yaw):
+    def update(self, curr_cnt_a, curr_cnt_b):
         """
         return (pwm_a, pwm_b)
         
@@ -35,19 +37,17 @@ class Motors():
             # First update: Initialize values
             self.initialized = True
             self.start_cnt_a = curr_cnt_a
-            self.prev_cnt_a = 0
+            self.prev_cnt_a = curr_cnt_a
             self.start_cnt_b = curr_cnt_b
-            self.prev_cnt_b = 0
-            self.start_yaw = yaw
-            self.prev_yaw = 0
+            self.prev_cnt_b = curr_cnt_b
             self.prev_rate_a = 0
             self.prev_rate_b = 0
             self.prev_time = time.ticks_ms()
             self.start_time = time.ticks_ms()
             pwm_a = 0
             pwm_b = 0
-            # print('p_trim_a, i_trim_a, d_trim_a, c_trim_a')
-            print('total_cnt_a, total_cnt_b, rate_a, rate_b')
+            print('p_trim_a, i_trim_a, d_trim_a, c_trim_a')
+            # print('total_cnt_a, total_cnt_b, rate_a, rate_b')
         else:
             # subsequent updates
             
@@ -75,7 +75,7 @@ class Motors():
                 rate_a = 0
                 rate_b = 0
             else:
-                # time is in ms thus x 1_000 below
+                # delta_time is in ms thus * 1_000 below
                 rate_a = (delta_cnt_a / delta_time) * 1_000
                 rate_b = (delta_cnt_b / delta_time) * 1_000
 
@@ -115,11 +115,11 @@ class Motors():
             c_trim_a = cnt_err * self.EKC
             c_trim_b = -cnt_err * self.EKC
 
-            # print(p_trim_a, i_trim_a, d_trim_a, c_trim_a)
-            print(total_cnt_a, total_cnt_b, rate_a, rate_b)
+            print(p_trim_a, i_trim_a, d_trim_a, c_trim_a)
+            # print(total_cnt_a, total_cnt_b, rate_a, rate_b)
 
-            mult_a = self.multiplier + p_trim_a + i_trim_a + d_trim_a # + c_trim_a
-            mult_b = self.multiplier + p_trim_b + i_trim_b + d_trim_b # + c_trim_b
+            mult_a = self.multiplier + p_trim_a + i_trim_a + d_trim_a + c_trim_a
+            mult_b = self.multiplier + p_trim_b + i_trim_b + d_trim_b + c_trim_b
 
             # calculate PWM values
             pwm_a = int(self.ttr * (mult_a))
@@ -132,9 +132,9 @@ class Motors():
         return pwm_a, pwm_b
 
     def _accumulated(self, rate, rate_list):
-        """return sum of last 10 values of rate"""
+        """return sum of previous values of rate"""
 
-        # if len(rate_list) == 100:
-        #    _ = rate_list.pop(0)
+        if len(rate_list) == 100:
+            _ = rate_list.pop(0)
         rate_list.append(rate)
         return sum(rate_list)
