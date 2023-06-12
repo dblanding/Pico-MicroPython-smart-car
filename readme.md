@@ -203,7 +203,7 @@ Looking at the javascript code in Bob Grant's code and the javascript code in th
 | ---- | ---- |
 | 56 x | gear reduction |
 | 11 x | magnetic poles on rotor |
-|  4 x | detecting both rising and falling edges from both quadrature sensors |
+|  4 x | detecting both rising and falling edges from 2 (quadrature) sensors |
 | 2464 | Total (ticks per wheel rev) |
 
 | Value | Parameter |
@@ -212,22 +212,16 @@ Looking at the javascript code in Bob Grant's code and the javascript code in th
 | 11_514 | ticks per meter |
 
 * Even after optimizinging PID coefficients, there is still some visually detectable *wiggle* in the car's steering as it begins driving straight forward or backward.
-    * Small wiggles occur as the 2 motors come up to speed, before the feedback loop has had a chance to lock them onto their target speed.
-    * To reduce this steering wiggle, I will try using yaw feedback from the IMU to keep them *together* as they come up to speed.
-* (Re)installed the BNO08x IMU sensor
-    * Moved encoder pins from gpio pins 0, 1, 2, 3 to pins 12, 13, 14, 15
-    * Hooked up BNO085 IMU to default UART (pins 0, 1)
-    * Sped up the main loop (delay was 0.1, now 0.01) to get more instantaneous values of `yaw` angle.
-
-> At power-up, the IMU reports `yaw = 0`, thereafter reporting positive (+) values when rotated CW from the starting position.
-
-* After geting the IMU hooked up, I realized that I can use the difference between a_counts and b_counts as a surrogtae for yaw.
-* Replaced motor.Motor class with motors.Motors, which not only performs the PID calculations for both motors, it adds a 'C' term, making it a PIDC controller. The C term keeps track of the cumulative tick counts for both motors, urging them to stay in lock step.
+    * Small differences in friction between the 2 motors cause them to come up to speed differently even under the control of the feedback loop.
+    * To reduce this steering wiggle, I will try adding a 4th term (C) to the controller, minimizing the difference between the encoder counts of the two motors.
+    * Adding a 'C' term makes the PID controller into a PIDC controller.
+    * The C term keeps track of the cumulative tick counts for both motors, urging them to stay in lock step.
+* To implement this, a single instance of the new motors.Motors class replaces the 2 instances of motor.Motor class. 
     * P (proportional)
     * I (integral)
     * D (Derivative)
     * C (count difference a / b)
 * Got this working in both Forward & Back directions.
-    * performance data in [spreadsheets folder](spreadsheets).
-
+    * The steering wiggle is no longer visually noticeable.
+    * Performance data of some 1 meter runs (FWD & BACK) are shown in [spreadsheets folder](spreadsheets).
 

@@ -18,14 +18,6 @@ from machine import Pin, PWM, UART
 import time
 from secrets import secrets
 from motors import Motors
-from bno08x_rvc import BNO08x_RVC, RVCReadTimeoutError
-
-# setup IMU in RVC mode on UART
-uart = UART(0, baudrate=115200, tx=Pin(0), rx=Pin(1))
-# print(dir(uart))
-rvc = BNO08x_RVC(uart)
-# print(dir(rvc))
-yaw, r, p, x, y, z = rvc.heading
 
 ssid = secrets['ssid']
 password = secrets['wifi_password']
@@ -39,7 +31,6 @@ TICKS_PER_METER = 11_514
 
 # Set motor speed slower during in-place turns
 turn_spd = target_tick_rate * 6
-
 
 html = """<!DOCTYPE html>
 <html>
@@ -221,97 +212,80 @@ async def main():
     start_time = time.ticks_ms()
     prev_time = time.ticks_ms()
     prev_mode = 'S'  # stop
-    prev_yaw = 0
-    loop_count = 0
     while True:
-        loop_count += 1
-        
-        # Get data from IMU
-        try:
-            yaw, *_ = rvc.heading
-            prev_yaw = yaw
-        except RVCReadTimeoutError:
-            yaw = prev_yaw
-        # print(yaw)
 
-        if loop_count == 10:
-            loop_count = 0
+        # Flash LED
+        led.toggle()
 
-            # Flash LED
-            led.toggle()
-
-            # Check to see if drive_mode has changed
-            if drive_mode != prev_mode:
-                prev_mode = drive_mode
-                mtrs = None
-                gc.collect()
-                if drive_mode == 'F':
-                    # Instantiate Motors object
-                    mtrs = Motors(target_tick_rate)
-                    
-                    # Set direction pins
-                    move_forward()
-                    
-                    # save starting value of encoders
-                    enc_a_start = enc_a.value()
-                    enc_b_start = enc_b.value()
-
-                elif drive_mode == 'B':
-                    # Instantiate Motors object
-                    mtrs = Motors(target_tick_rate, fwd=False)
-                    
-                    # Set direction pins
-                    move_backward()
-                    
-                    # save starting value of encoders
-                    enc_a_start = enc_a.value()
-                    enc_b_start = enc_b.value()
-
-                elif drive_mode == 'R':
-                    # Execute right turn
-                    turn_right()
-                    del(mtrs)
-
-                elif drive_mode == 'L':
-                    # Execute left turn
-                    turn_left()
-                    del(mtrs)
-
-                elif drive_mode == 'S':
-                    # Stop motors
-                    move_stop()
-                    del(mtrs)
-
-            # Drive forward to distance (m)
+        # Check to see if drive_mode has changed
+        if drive_mode != prev_mode:
+            prev_mode = drive_mode
+            mtrs = None
+            gc.collect()
             if drive_mode == 'F':
-                goal_distance = 0.9  # meter
-                goal_a = enc_a_start + (goal_distance * TICKS_PER_METER)
-                if enc_a.value() < goal_a:
-                    pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value())
-                    set_mtr_spds(pwm_a, pwm_b)
-                else:
-                    drive_mode = 'S'
-                    move_stop()
-                    del(mtrs)
+                # Instantiate Motors object
+                mtrs = Motors(target_tick_rate)
+                
+                # Set direction pins
+                move_forward()
+                
+                # save starting value of encoders
+                enc_a_start = enc_a.value()
+                enc_b_start = enc_b.value()
 
-            # Drive backward to distance (m)
-            if drive_mode == 'B':
-                goal_distance = 0.9  # meter
-                goal_a = enc_a_start - (goal_distance * TICKS_PER_METER)
-                if enc_a.value() > goal_a:
-                    pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value())
-                    set_mtr_spds(pwm_a, pwm_b)
-                else:
-                    drive_mode = 'S'
-                    move_stop()
-                    del(mtrs)
+            elif drive_mode == 'B':
+                # Instantiate Motors object
+                mtrs = Motors(target_tick_rate, fwd=False)
+                
+                # Set direction pins
+                move_backward()
+                
+                # save starting value of encoders
+                enc_a_start = enc_a.value()
+                enc_b_start = enc_b.value()
 
-            # Calculate pose (odometrically)
-            # To do...
+            elif drive_mode == 'R':
+                # Execute right turn
+                turn_right()
+                del(mtrs)
 
-        # short delay time keeps the IMU data fresh
-        # everything else goes every tenth time thru loop 
-        await asyncio.sleep(0.01)
+            elif drive_mode == 'L':
+                # Execute left turn
+                turn_left()
+                del(mtrs)
+
+            elif drive_mode == 'S':
+                # Stop motors
+                move_stop()
+                del(mtrs)
+
+        # Drive forward to distance
+        if drive_mode == 'F':
+            goal_distance = 0.9  # meters
+            goal_a = enc_a_start + (goal_distance * TICKS_PER_METER)
+            if enc_a.value() < goal_a:
+                pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value())
+                set_mtr_spds(pwm_a, pwm_b)
+            else:
+                drive_mode = 'S'
+                move_stop()
+                del(mtrs)
+
+        # Drive backward to distance
+        if drive_mode == 'B':
+            goal_distance = 0.9  # meters
+            goal_a = enc_a_start - (goal_distance * TICKS_PER_METER)
+            if enc_a.value() > goal_a:
+                pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value())
+                set_mtr_spds(pwm_a, pwm_b)
+            else:
+                drive_mode = 'S'
+                move_stop()
+                del(mtrs)
+
+        # To do: Calculate pose (odometrically)
+ 
+        await asyncio.sleep(0.1)
 
 try:
     asyncio.run(main())
