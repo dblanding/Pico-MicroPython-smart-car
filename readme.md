@@ -73,21 +73,21 @@ Bob Grant ([Bytes N Bits](https://bytesnbits.co.uk/S)) has produced this series 
     * [Bytes N Bits web page](https://bytesnbits.co.uk/web-control-panel-web-page/)
     * [Github Repo](https://github.com/getis/micropython-web-control-panel)
 
-But first, just to get started, I will use a more primitive, basic wewb control interface.
+But first, just to get started, I will use a more primitive, basic web control interface.
 Christopher Barnatt shows a very simple [Pi Pico W WiFi Controlled Robot](https://www.explainingcomputers.com/pi_pico_w_robot.html)
 * The robot runs a basic webserver displaying a very simple form with 5 buttons.
 
 ![webpage form](imgs/5-button_form.png)
 
 This looks just right for this project. Simple and straightforward. I just need the webserver to run asynchronously so it doesn't block the robot's navigation code.
-* `pico_car+webserver.py` is the final code for the pico car with the navigation code and web interface bundled together.
+* `pico_car+webserver.py` combines the web interface code the navigation code bundled together.
 
 ## Pause for project assessment
 
 At this point, I have a nice, cheap mobile car platform for testing various robot-related concepts. And it is all running on the PICO-W.
 
 Right now, if I set the car on the floor and turn it on, and then go to my laptop and browse to the car's webserver url (192.168.1.64), I get the car's 5-button navigtation panel.
-* If I click the **Back** button, the car drives in reverse and it uses the PID feedback from the IMU to drive roughly stragiht in reverse (with some minor steering oscillations) until it arrives to within  250 mm of a wall.
+* If I click the **Back** button, the car drives in reverse and it uses the PID feedback from the IMU to drive roughly straight in reverse (with some minor steering oscillations) until it arrives to within  250 mm of a wall.
 * However if I click on the **Forward** button, the car goes forward, but drives as if it had a *steering wheel* that was turned 90 degrees to the left.
     * The left wheel was runnning slower than the right one.
     * Probably due to friction (I thought)
@@ -102,7 +102,7 @@ Right now, if I set the car on the floor and turn it on, and then go to my lapto
 
 ## Find inexpensive gear motors with encoders for the Pico Car
 
-I have been down this road previously and the best motors/wheels I found were the ones used by the Elegoo Tumbller. For the ROS robot, I wanted a higher gear reduction and ended up using motors with a 40:1 worm drive gear box.
+I have been down this road previously and the best motors/wheels I found were the ones used by the Elegoo Tumbller. For the ROS robot, I wanted a higher gear reduction and ended up using motors with a 100:1 worm drive gear box.
 
 For this project, I am not convinced that I need a different gear reduction, so I will proceed with the motors/wheels used by the Tumbller. I found them available for $12 apiece on [Aliexpress](https://www.aliexpress.us/item/2251832832394397.html?gatewayAdapt=glo2usa4itemAdapt) and [ordered 2](aliexpress-order/aliexpress-order.pdf).  There is a chart that shows various gearabox options. The Tumbller motor has a 30:1 gearbox with a length of 22 mm. Higher gear reductions can be gotten but have a greater length.  When I was looking for higher reduction motors for the ROS robot, I hadn't found these motors from Aliexpress. Looking at the Tumbller, it looks like there is enough room for the 24 mm length gearbox. So I could choose either 56:1 or 90:1 gear reductions.
 
@@ -142,14 +142,14 @@ I found a collection of [Awesome MicroPython](https://awesome-micropython.com/#r
     * This solved the problem with the L293N P/S, but now the motors run much **faster** than they need to, so in order to operate at a moderate speed, a lower PWM signal is needed.
 
 
-* I have received and installed the motors I ordered from AliExpress. (3 week from order to arrival)
+* I have received and installed the motors I ordered from AliExpress. (3 weeks from order to arrival)
     * It turns out they are the 56:1 motors.
     * This gear reduction works very well.
         * The cruising speed of the car is fine with the LiPo battery 
         * In-place turning works great with lower PWM values.
         * Decided to order another pair (spares)
     * For now, I drive the motors at a target tick rate of 4000 ticks/sec by applying an individual multiplier for each motor to arrive at a PWM signal that runs them both at approximately the same speed.
-        * The PWM signals are in the vicinity of 50_000 (max value = 65,536)
+        * The PWM signals are in the vicinity of 50_000 (max value = 65,535)
 
 * I am still using the 5-button web interface (asynchrouous) to control the car. This works OK, but it is pretty bare bones. I might want to explore a joystick for speed and direction control.
 * I removed the VCSEL sensors and the IMU (for now) while I focus on getting the motors to use PID feedback from the encoders to drive at a target tick rate.
