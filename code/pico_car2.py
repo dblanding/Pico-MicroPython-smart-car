@@ -18,6 +18,7 @@ from machine import Pin, PWM, UART
 import time
 from secrets import secrets
 from motors import Motors
+from odometer import Odometer
 
 ssid = secrets['ssid']
 password = secrets['wifi_password']
@@ -212,11 +213,17 @@ async def main():
     start_time = time.ticks_ms()
     prev_time = time.ticks_ms()
     prev_mode = 'S'  # stop
+    odom = Odometer()
     while True:
 
         # Flash LED
         led.toggle()
 
+        # update odometer
+        enc_a_val = enc_a.value()
+        enc_b_val = enc_b.value()
+        pose = odom.update(enc_a_val, enc_b_val)
+        
         # Check to see if drive_mode has changed
         if drive_mode != prev_mode:
             prev_mode = drive_mode
@@ -266,6 +273,7 @@ async def main():
             if enc_a.value() < goal_a:
                 pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value())
                 set_mtr_spds(pwm_a, pwm_b)
+                print(pose)
             else:
                 drive_mode = 'S'
                 move_stop()
@@ -278,12 +286,12 @@ async def main():
             if enc_a.value() > goal_a:
                 pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value())
                 set_mtr_spds(pwm_a, pwm_b)
+                print(pose)
             else:
                 drive_mode = 'S'
                 move_stop()
                 del(mtrs)
 
-        # To do: Calculate pose (odometrically)
  
         await asyncio.sleep(0.1)
 
