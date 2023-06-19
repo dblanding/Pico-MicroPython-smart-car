@@ -20,16 +20,13 @@ import time
 from secrets import secrets
 from motors import Motors
 from odometer import Odometer
-from parameters import TICKS_PER_METER, TARGET_TICK_RATE
+from parameters import TICKS_PER_METER, TARGET_TICK_RATE, TURN_SPD, ANGLE_TOL
 
 ssid = secrets['ssid']
 password = secrets['wifi_password']
 
 # Set drive_mode to one of: 'F', 'B', 'R', 'L', 'S'
 drive_mode = 'S'  # stop
-
-# Set PWM value for motors during in-place turns
-turn_spd = 20_000
 
 html = """<!DOCTYPE html>
 <html>
@@ -133,12 +130,12 @@ def move_stop():
 def turn_left():
     # print('turn left')
     set_mtr_dirs('REV', 'FWD')
-    # set_mtr_spds(turn_spd, turn_spd)
+    # set_mtr_spds(TURN_SPD, TURN_SPD)
 
 def turn_right():
     # print('turn right')
     set_mtr_dirs('FWD', 'REV')
-    set_mtr_spds(turn_spd, turn_spd)
+    set_mtr_spds(TURN_SPD, TURN_SPD)
 
 #Stop the robot ASAP
 move_stop()
@@ -292,23 +289,35 @@ async def main():
         if drive_mode == 'L':
             goal_angle = math.pi / 2
             _, _, curr_angle = pose
-            if curr_angle < goal_angle:
-                set_mtr_spds(turn_spd, turn_spd)
+            if curr_angle < (goal_angle - ANGLE_TOL):
+                turn_left()
+                set_mtr_spds(TURN_SPD, TURN_SPD)
+                print(pose)
+            elif curr_angle > (goal_angle + ANGLE_TOL):
+                turn_right()
+                set_mtr_spds(TURN_SPD, TURN_SPD)
                 print(pose)
             else:
                 drive_mode = 'S'
                 move_stop()
-             
+                print(pose)
+
         # Turn right to angle 0 deg
         if drive_mode == 'R':
             goal_angle = 0
             _, _, curr_angle = pose
-            if curr_angle > goal_angle:
-                set_mtr_spds(turn_spd, turn_spd)
+            if curr_angle > (goal_angle + ANGLE_TOL):
+                turn_right()
+                set_mtr_spds(TURN_SPD, TURN_SPD)
+                print(pose)
+            elif curr_angle < (goal_angle - ANGLE_TOL):
+                turn_left()
+                set_mtr_spds(TURN_SPD, TURN_SPD)
                 print(pose)
             else:
                 drive_mode = 'S'
                 move_stop()
+                print(pose)
 
         await asyncio.sleep(0.1)
 

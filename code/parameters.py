@@ -9,3 +9,9 @@ TICKS_PER_METER = TICKS_PER_REV / WHEEL_CIRC
 
 # nominal motor speed for driving straight (ticks per sec)
 TARGET_TICK_RATE = 4000
+
+# motor speed while turning in place (PWM value)
+TURN_SPD = 20_000
+
+# half width of "good enough" zone when turning to angle
+ANGLE_TOL = 0.035  # radians (2 degrees)
