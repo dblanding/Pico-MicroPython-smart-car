@@ -46,7 +46,7 @@ class Motors():
             self.start_time = time.ticks_ms()
             pwm_a = 0
             pwm_b = 0
-            print('p_trim_a, i_trim_a, d_trim_a, c_trim_a')
+            # print('p_trim_a, i_trim_a, d_trim_a, c_trim_a')
             # print('total_cnt_a, total_cnt_b, rate_a, rate_b')
         else:
             # subsequent updates
@@ -115,7 +115,7 @@ class Motors():
             c_trim_a = cnt_err * self.EKC
             c_trim_b = -cnt_err * self.EKC
 
-            print(p_trim_a, i_trim_a, d_trim_a, c_trim_a)
+            # print(p_trim_a, i_trim_a, d_trim_a, c_trim_a)
             # print(total_cnt_a, total_cnt_b, rate_a, rate_b)
 
             mult_a = self.multiplier + p_trim_a + i_trim_a + d_trim_a + c_trim_a

@@ -4,9 +4,8 @@ MicroPython code for Pico car project using:
 * 56:1 gear motors with encoders
 * Asynchrounous webserver enables remote control
 * In fwd or back modes, use encoder feedback to
-    * drive motors at target_tick_rate
-    * for 1 meter
-* BNO08x IMU hooked up but not used
+    * drive motors at TARGET_TICK_RATE
+    * for 0.9 meter
 """
 
 import encoder_rp2 as encoder
@@ -19,6 +18,7 @@ import time
 from secrets import secrets
 from motors import Motors
 from odometer import Odometer
+from parameters import TICKS_PER_METER, TARGET_TICK_RATE
 
 ssid = secrets['ssid']
 password = secrets['wifi_password']
@@ -26,12 +26,8 @@ password = secrets['wifi_password']
 # Set drive_mode to one of: 'F', 'B', 'R', 'L', 'S'
 drive_mode = 'S'  # stop
 
-# Motor parameters
-target_tick_rate = 4000  # ticks per sec
-TICKS_PER_METER = 11_514
-
 # Set motor speed slower during in-place turns
-turn_spd = target_tick_rate * 6
+turn_spd = TARGET_TICK_RATE * 6
 
 html = """<!DOCTYPE html>
 <html>
@@ -231,7 +227,7 @@ async def main():
             gc.collect()
             if drive_mode == 'F':
                 # Instantiate Motors object
-                mtrs = Motors(target_tick_rate)
+                mtrs = Motors(TARGET_TICK_RATE)
                 
                 # Set direction pins
                 move_forward()
@@ -242,7 +238,7 @@ async def main():
 
             elif drive_mode == 'B':
                 # Instantiate Motors object
-                mtrs = Motors(target_tick_rate, fwd=False)
+                mtrs = Motors(TARGET_TICK_RATE, fwd=False)
                 
                 # Set direction pins
                 move_backward()

@@ -1,9 +1,5 @@
 import math
-
-TRACK_WIDTH = 0.1778  # meters (7 inches)
-WHEEL_CIRC = 0.214  # meters
-TICKS_PER_REV = 2464
-METERS_PER_TICK = WHEEL_CIRC / TICKS_PER_REV
+from parameters import TRACK_WIDTH, METERS_PER_TICK
 
 
 class Odometer():
