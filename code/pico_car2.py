@@ -2,10 +2,11 @@
 MicroPython code for Pico car project using:
 * Raspberry Pi Pico mounted on differential drive car
 * 56:1 gear motors with encoders
-* Asynchrounous webserver enables remote control
-* In fwd or back modes, use encoder feedback to
-    * drive motors at TARGET_TICK_RATE
-    * for 0.9 meter
+* Asynchrounous webserver enabling remote control
+* Encoder feedback used in fwd and back modes to
+    * drive motors at TARGET_TICK_RATE for 0.9 meter
+    * PID (+C for R & L) keeps wheels at target spd and
+      in lock step despite R & L motor differences
 """
 
 import encoder_rp2 as encoder
@@ -82,7 +83,7 @@ in4 = Pin(17, Pin.OUT, value=0)
 enb = PWM(Pin(16))
 
 ena.freq(1_000)
-ena.freq(1_000)
+enb.freq(1_000)
 
 def set_mtr_dirs(a_mode, b_mode):
     """Set motor direction pins for both motors.

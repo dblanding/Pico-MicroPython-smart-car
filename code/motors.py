@@ -34,7 +34,7 @@ class Motors():
         """
 
         if not self.initialized:
-            # First update: Initialize values
+            # Initialize values on first update
             self.initialized = True
             self.start_cnt_a = curr_cnt_a
             self.prev_cnt_a = curr_cnt_a
@@ -49,9 +49,7 @@ class Motors():
             # print('p_trim_a, i_trim_a, d_trim_a, c_trim_a')
             # print('total_cnt_a, total_cnt_b, rate_a, rate_b')
         else:
-            # subsequent updates
-            
-            # control motor_a speed using encoder feedback
+            # control motor speed on subsequent updates
             
             # calculate delta tick counts since previous update
             curr_time = time.ticks_ms()
@@ -72,6 +70,7 @@ class Motors():
             self.prev_cnt_a = curr_cnt_a
             self.prev_cnt_b = curr_cnt_b
             if delta_time == 0:
+                # avoid dividing by zero
                 rate_a = 0
                 rate_b = 0
             else:
