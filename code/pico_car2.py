@@ -11,10 +11,11 @@ MicroPython code for Pico car project using:
 
 import encoder_rp2 as encoder
 import gc
+import math
 import network
 import uasyncio as asyncio
 import _thread
-from machine import Pin, PWM, UART
+from machine import Pin, PWM
 import time
 from secrets import secrets
 from motors import Motors
@@ -27,8 +28,8 @@ password = secrets['wifi_password']
 # Set drive_mode to one of: 'F', 'B', 'R', 'L', 'S'
 drive_mode = 'S'  # stop
 
-# Set motor speed slower during in-place turns
-turn_spd = TARGET_TICK_RATE * 6
+# Set PWM value for motors during in-place turns
+turn_spd = 20_000
 
 html = """<!DOCTYPE html>
 <html>
@@ -132,7 +133,7 @@ def move_stop():
 def turn_left():
     # print('turn left')
     set_mtr_dirs('REV', 'FWD')
-    set_mtr_spds(turn_spd, turn_spd)
+    # set_mtr_spds(turn_spd, turn_spd)
 
 def turn_right():
     # print('turn right')
@@ -249,15 +250,13 @@ async def main():
                 enc_b_start = enc_b.value()
 
             elif drive_mode == 'R':
-                # Execute right turn
+                # Set direction pins
                 turn_right()
-                del(mtrs)
 
             elif drive_mode == 'L':
-                # Execute left turn
+                # Set direction pins
                 turn_left()
-                del(mtrs)
-
+                
             elif drive_mode == 'S':
                 # Stop motors
                 move_stop()
@@ -270,7 +269,7 @@ async def main():
             if enc_a.value() < goal_a:
                 pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value())
                 set_mtr_spds(pwm_a, pwm_b)
-                print(pose)
+                # print(pose)
             else:
                 drive_mode = 'S'
                 move_stop()
@@ -283,17 +282,37 @@ async def main():
             if enc_a.value() > goal_a:
                 pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value())
                 set_mtr_spds(pwm_a, pwm_b)
-                print(pose)
+                # print(pose)
             else:
                 drive_mode = 'S'
                 move_stop()
                 del(mtrs)
 
- 
+        # Turn left to angle 90 deg
+        if drive_mode == 'L':
+            goal_angle = math.pi / 2
+            _, _, curr_angle = pose
+            if curr_angle < goal_angle:
+                set_mtr_spds(turn_spd, turn_spd)
+                print(pose)
+            else:
+                drive_mode = 'S'
+                move_stop()
+             
+        # Turn right to angle 0 deg
+        if drive_mode == 'R':
+            goal_angle = 0
+            _, _, curr_angle = pose
+            if curr_angle > goal_angle:
+                set_mtr_spds(turn_spd, turn_spd)
+                print(pose)
+            else:
+                drive_mode = 'S'
+                move_stop()
+
         await asyncio.sleep(0.1)
 
 try:
     asyncio.run(main())
 finally:
-    uart.deinit()
     asyncio.new_event_loop()
