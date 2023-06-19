@@ -225,3 +225,11 @@ Looking at the javascript code in Bob Grant's code and the javascript code in th
     * The steering wiggle is no longer visually noticeable.
     * Performance data of some 1 meter runs (FWD & BACK) are shown in [spreadsheets folder](spreadsheets).
 
+## Other refinements
+
+* Added Odometer class, which updates pose each time through the main loop.
+    * `pose = Odometer.update(enc_a.value(), enc_b.value())`
+    * `pose_x, pose_y, pose_angle = pose`
+* Using pose_angle, left and right buttons can now turn to a goal_angle.
+* Using encoder_values, driving forward and back can go to a goal_distance.
+

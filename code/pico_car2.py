@@ -115,27 +115,20 @@ def set_mtr_spds(a_PWM_val, b_PWM_val):
     enb.duty_u16(int(b_PWM_val))
 
 def move_forward():
-    # print('move forward')
     set_mtr_dirs('FWD', 'FWD')
 
 def move_backward():
-    # print('move backward')
     set_mtr_dirs('REV', 'REV')
 
-def move_stop():
-    # print('STOP')
-    set_mtr_dirs('OFF', 'OFF')
-    set_mtr_spds(0, 0)
-
 def turn_left():
-    # print('turn left')
     set_mtr_dirs('REV', 'FWD')
-    # set_mtr_spds(TURN_SPD, TURN_SPD)
 
 def turn_right():
-    # print('turn right')
     set_mtr_dirs('FWD', 'REV')
-    set_mtr_spds(TURN_SPD, TURN_SPD)
+
+def move_stop():
+    set_mtr_dirs('OFF', 'OFF')
+    set_mtr_spds(0, 0)
 
 #Stop the robot ASAP
 move_stop()
@@ -218,6 +211,7 @@ async def main():
         enc_a_val = enc_a.value()
         enc_b_val = enc_b.value()
         pose = odom.update(enc_a_val, enc_b_val)
+        pose_x, pose_y, pose_angle = pose
         
         # Check to see if drive_mode has changed
         if drive_mode != prev_mode:
@@ -247,10 +241,12 @@ async def main():
                 enc_b_start = enc_b.value()
 
             elif drive_mode == 'R':
+                goal_angle = pose_angle - math.pi / 2
                 # Set direction pins
                 turn_right()
 
             elif drive_mode == 'L':
+                goal_angle = pose_angle + math.pi / 2
                 # Set direction pins
                 turn_left()
                 
@@ -287,13 +283,11 @@ async def main():
 
         # Turn left to angle 90 deg
         if drive_mode == 'L':
-            goal_angle = math.pi / 2
-            _, _, curr_angle = pose
-            if curr_angle < (goal_angle - ANGLE_TOL):
+            if pose_angle < (goal_angle - ANGLE_TOL):
                 turn_left()
                 set_mtr_spds(TURN_SPD, TURN_SPD)
                 print(pose)
-            elif curr_angle > (goal_angle + ANGLE_TOL):
+            elif pose_angle > (goal_angle + ANGLE_TOL):
                 turn_right()
                 set_mtr_spds(TURN_SPD, TURN_SPD)
                 print(pose)
@@ -304,13 +298,11 @@ async def main():
 
         # Turn right to angle 0 deg
         if drive_mode == 'R':
-            goal_angle = 0
-            _, _, curr_angle = pose
-            if curr_angle > (goal_angle + ANGLE_TOL):
+            if pose_angle > (goal_angle + ANGLE_TOL):
                 turn_right()
                 set_mtr_spds(TURN_SPD, TURN_SPD)
                 print(pose)
-            elif curr_angle < (goal_angle - ANGLE_TOL):
+            elif pose_angle < (goal_angle - ANGLE_TOL):
                 turn_left()
                 set_mtr_spds(TURN_SPD, TURN_SPD)
                 print(pose)
