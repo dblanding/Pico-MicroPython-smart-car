@@ -130,7 +130,7 @@ def move_stop():
     set_mtr_dirs('OFF', 'OFF')
     set_mtr_spds(0, 0)
 
-#Stop the robot ASAP
+# Stop the robot NOW
 move_stop()
 
 wlan = network.WLAN(network.STA_IF)
@@ -207,12 +207,16 @@ async def main():
         # Flash LED
         led.toggle()
 
-        # update odometer
+        # get up-to-date encoder values
         enc_a_val = enc_a.value()
         enc_b_val = enc_b.value()
+
+        # get up-to-date pose value
         pose = odom.update(enc_a_val, enc_b_val)
         pose_x, pose_y, pose_angle = pose
-        
+        pose_ang_deg = pose_angle * 180 / math.pi
+        pose_deg = (pose_x, pose_y, pose_ang_deg)  # for display
+
         # Check to see if drive_mode has changed
         if drive_mode != prev_mode:
             prev_mode = drive_mode
@@ -241,21 +245,19 @@ async def main():
                 enc_b_start = enc_b.value()
 
             elif drive_mode == 'R':
+                # set goal_angle pi/2 CW (rel)
                 goal_angle = pose_angle - math.pi / 2
-                # Set direction pins
-                turn_right()
 
             elif drive_mode == 'L':
+                # set goal_angle pi/2 CCW (rel)
                 goal_angle = pose_angle + math.pi / 2
-                # Set direction pins
-                turn_left()
                 
             elif drive_mode == 'S':
                 # Stop motors
                 move_stop()
                 del(mtrs)
 
-        # Drive forward to distance
+        # Drive forward to goal_distance
         if drive_mode == 'F':
             goal_distance = 0.9  # meters
             goal_a = enc_a_start + (goal_distance * TICKS_PER_METER)
@@ -268,7 +270,7 @@ async def main():
                 move_stop()
                 del(mtrs)
 
-        # Drive backward to distance
+        # Drive backward to goal_distance
         if drive_mode == 'B':
             goal_distance = 0.9  # meters
             goal_a = enc_a_start - (goal_distance * TICKS_PER_METER)
@@ -281,35 +283,20 @@ async def main():
                 move_stop()
                 del(mtrs)
 
-        # Turn left to angle 90 deg
-        if drive_mode == 'L':
+        # Turn to goal_angle
+        if drive_mode in ('L', 'R'):
             if pose_angle < (goal_angle - ANGLE_TOL):
                 turn_left()
                 set_mtr_spds(TURN_SPD, TURN_SPD)
-                print(pose)
+                print(pose_deg)
             elif pose_angle > (goal_angle + ANGLE_TOL):
                 turn_right()
                 set_mtr_spds(TURN_SPD, TURN_SPD)
-                print(pose)
+                print(pose_deg)
             else:
                 drive_mode = 'S'
                 move_stop()
-                print(pose)
-
-        # Turn right to angle 0 deg
-        if drive_mode == 'R':
-            if pose_angle > (goal_angle + ANGLE_TOL):
-                turn_right()
-                set_mtr_spds(TURN_SPD, TURN_SPD)
-                print(pose)
-            elif pose_angle < (goal_angle - ANGLE_TOL):
-                turn_left()
-                set_mtr_spds(TURN_SPD, TURN_SPD)
-                print(pose)
-            else:
-                drive_mode = 'S'
-                move_stop()
-                print(pose)
+                print(pose_deg)
 
         await asyncio.sleep(0.1)
 
