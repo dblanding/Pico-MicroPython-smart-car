@@ -98,7 +98,14 @@ Right now, if I set the car on the floor and turn it on, and then go to my lapto
         * This of course, is the configuration of the ROS mobile robot, which makes further use of the encoder information to accurately compute odometry.
 
 
-> The cute little yellow motors that come on the **DIY Smart Car** are altogether **inadequate** for use on a DIY robot. Any serious robot project must have motor shaft encoders and a gearbox with a reduction of roughly 30 to 40x.
+* Having come to the following realization, I decided to scrap the original chassis and motors, and begin again from scratch:
+
+> The cute little yellow motors that come on the **DIY Smart Car** are altogether **inadequate** for use on a DIY robot. Any serious robot project must have motor shaft encoders and a gearbox with a reduction of at least 30 to 40x.
+
+# Henceforth, this project is renamed **PicoBot**
+
+* The original code is in the folder `code_other/`.
+* The PicoBot code is in the folder `code_picobot2/`.
 
 ## Find inexpensive gear motors with encoders for the Pico Car
 
@@ -140,7 +147,6 @@ I found a collection of [Awesome MicroPython](https://awesome-micropython.com/#r
 * The car has been completely rebuilt to replace the little yellow smart car motors with the Tumbller motors. However, the new motors still have intrinsic differences that cause the car to turn excessively when intending to drive straight with the application of equal PWM signals.
 * I replaced the 4-pack of AA batteries with a LiPo 3S 50C battery. This was to remedy the problem that as the AA batteries got a little tired, the 5V PS on the L298N was unable to provide 5V out and therefore was unable to power the Pico.
     * This solved the problem with the L293N P/S, but now the motors run much **faster** than they need to, so in order to operate at a moderate speed, a lower PWM signal is needed.
-
 
 * I have received and installed the motors I ordered from AliExpress. (3 weeks from order to arrival)
     * It turns out they are the 56:1 motors.
@@ -232,4 +238,21 @@ Looking at the javascript code in Bob Grant's code and the javascript code in th
     * `pose_x, pose_y, pose_angle = pose`
 * Using pose_angle, left and right buttons can now turn to a goal_angle.
 * Using encoder_values, driving forward and back can go to a goal_distance.
+
+## Implemented Programmed Driving Instructions
+
+* The main loop now loads the `instrux` list containing a sequence of `(drive_mode, goal)` tuples and executes them one-by-one.
+* For example, here are the instructions to drive a 0.5 meter square in the CCW direction:
+```
+instrux = [('F', 0.5),
+           ('L', pi / 2),
+           ('F', 0.5),
+           ('L', pi),
+           ('F', 0.5),
+           ('L', 3 * pi / 2),
+           ('F', 0.5),
+           ('L', 2 * pi)]
+```
+
+* After completing the sequence, the PicoBot continues to respond to web requests.
 
