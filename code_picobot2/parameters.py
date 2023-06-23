@@ -8,7 +8,7 @@ METERS_PER_TICK = WHEEL_CIRC / TICKS_PER_REV
 TICKS_PER_METER = TICKS_PER_REV / WHEEL_CIRC
 
 # nominal motor speed for driving straight (ticks per sec)
-TARGET_TICK_RATE = 4000
+TARGET_TICK_RATE = 3000
 
 # motor speed while turning in place (PWM value)
 TURN_SPD = 20_000

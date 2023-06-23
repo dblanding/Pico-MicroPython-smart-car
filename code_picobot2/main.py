@@ -4,9 +4,12 @@ MicroPython code for Pico car project using:
 * 56:1 gear motors with encoders
 * Asynchrounous webserver enabling remote control
 * Encoder feedback used in fwd and back modes to
-    * drive motors at TARGET_TICK_RATE for 0.9 meter
-    * PID (+C for R & L) keeps wheels at target spd and
-      in lock step despite R & L motor differences
+    * drive motors at TARGET_TICK_RATE
+    * PID (+C ) keeps wheels at target spd and
+      in lock step despite motor differences
+* Odometer keeps track of pose (x, y, angle)
+* Follows list of driving instrux (drive_mode, goal)
+* After completing instrux, drives in remote control mode
 """
 
 import encoder_rp2 as encoder
@@ -21,12 +24,14 @@ from secrets import secrets
 from motors import Motors
 from odometer import Odometer
 from parameters import TICKS_PER_METER, TARGET_TICK_RATE, TURN_SPD, ANGLE_TOL
+from drive_instrux import instrux
 
 ssid = secrets['ssid']
 password = secrets['wifi_password']
 
 # Set drive_mode to one of: 'F', 'B', 'R', 'L', 'S'
 drive_mode = 'S'  # stop
+goal = None
 
 html = """<!DOCTYPE html>
 <html>
@@ -158,7 +163,7 @@ def connect():
     return ip
 
 async def serve_client(reader, writer):
-    global drive_mode
+    global drive_mode, goal
     # print("Client connected")
     request_line = await reader.readline()
     request_line = str(request_line)
@@ -174,14 +179,18 @@ async def serve_client(reader, writer):
     print("command = ", command)
     if command == '/forward?':
         drive_mode  = 'F'
+        goal = 1
     elif command =='/left?':
         drive_mode = 'L'
+        goal = None
     elif command =='/stop?':
         drive_mode = 'S'
     elif command =='/right?':
         drive_mode = 'R'
+        goal = None
     elif command =='/back?':
         drive_mode = 'B'
+        goal = 1
 
     response = html
     writer.write('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
@@ -192,7 +201,7 @@ async def serve_client(reader, writer):
     # print("Client disconnected")
 
 async def main():
-    global drive_mode
+    global drive_mode, goal
     print('Connecting to Network...')
     connect()
 
@@ -207,11 +216,15 @@ async def main():
         # Flash LED
         led.toggle()
 
-        # get up-to-date encoder values
+        # get next driving instruction
+        if drive_mode == 'S' and len(instrux):
+            drive_mode, goal = instrux.pop(0)
+
+        # get latest encoder values
         enc_a_val = enc_a.value()
         enc_b_val = enc_b.value()
 
-        # get up-to-date pose value
+        # get current pose
         pose = odom.update(enc_a_val, enc_b_val)
         pose_x, pose_y, pose_angle = pose
         pose_ang_deg = pose_angle * 180 / math.pi
@@ -244,14 +257,10 @@ async def main():
                 enc_a_start = enc_a.value()
                 enc_b_start = enc_b.value()
 
-            elif drive_mode == 'R':
-                # set goal_angle pi/2 CW (rel)
-                goal_angle = pose_angle - math.pi / 2
+            elif drive_mode in ('L', 'R'):
+                # set goal_angle (abs)
+                goal_angle = goal
 
-            elif drive_mode == 'L':
-                # set goal_angle pi/2 CCW (rel)
-                goal_angle = pose_angle + math.pi / 2
-                
             elif drive_mode == 'S':
                 # Stop motors
                 move_stop()
@@ -259,7 +268,7 @@ async def main():
 
         # Drive forward to goal_distance
         if drive_mode == 'F':
-            goal_distance = 0.9  # meters
+            goal_distance = goal
             goal_a = enc_a_start + (goal_distance * TICKS_PER_METER)
             if enc_a.value() < goal_a:
                 pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value())
@@ -272,7 +281,7 @@ async def main():
 
         # Drive backward to goal_distance
         if drive_mode == 'B':
-            goal_distance = 0.9  # meters
+            goal_distance = goal
             goal_a = enc_a_start - (goal_distance * TICKS_PER_METER)
             if enc_a.value() > goal_a:
                 pwm_a, pwm_b = mtrs.update(enc_a.value(), enc_b.value())
@@ -284,7 +293,7 @@ async def main():
                 del(mtrs)
 
         # Turn to goal_angle
-        if drive_mode in ('L', 'R'):
+        if drive_mode in ('L', 'R') and goal_angle:
             if pose_angle < (goal_angle - ANGLE_TOL):
                 turn_left()
                 set_mtr_spds(TURN_SPD, TURN_SPD)
@@ -297,6 +306,20 @@ async def main():
                 drive_mode = 'S'
                 move_stop()
                 print(pose_deg)
+
+        # Turn left
+        if drive_mode == 'L' and not goal:
+            turn_left()
+            set_mtr_spds(TURN_SPD, TURN_SPD)
+            print(pose_deg)
+            print('goal = ', goal)
+            
+        # Turn right
+        if drive_mode == 'R' and not goal:
+            turn_right()
+            set_mtr_spds(TURN_SPD, TURN_SPD)
+            print(pose_deg)
+            print('goal = ', goal)
 
         await asyncio.sleep(0.1)
 
