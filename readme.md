@@ -105,7 +105,7 @@ Right now, if I set the car on the floor and turn it on, and then go to my lapto
 # Henceforth, this project is renamed **PicoBot**
 
 * The original code is in the folder `code_other/`.
-* The PicoBot code is in the folder `code_picobot2/`.
+* The PicoBot code is in the folder `code_picobot/`.
 
 ## Find inexpensive gear motors with encoders for the Pico Car
 
@@ -159,45 +159,6 @@ I found a collection of [Awesome MicroPython](https://awesome-micropython.com/#r
 
 * I am still using the 5-button web interface (asynchrouous) to control the car. This works OK, but it is pretty bare bones. I might want to explore a joystick for speed and direction control.
 * I removed the VCSEL sensors and the IMU (for now) while I focus on getting the motors to use PID feedback from the encoders to drive at a target tick rate.
-
-## Learn how to create and display an [onscreen joystick](https://www.cssscript.com/onscreen-joystick/#google_vignette)
-
-Looked online for examples of onscreen joysticks and found a few:
-
-* Roberto D'Amico (bobboteck) [on github](https://github.com/bobboteck/JoyStick)
-    * [Multi-joystick demo](https://bobboteck.github.io/joy/joy.html)
-    * My initial attempt at implementing a [single joystick](/home/doug/pico-projects/joystick/JoyStick-master/joy_single.html)
-    * Google Ad showing [single joystick example](https://www.cssscript.com/demo/onscreen-joystick/)
-* [Another joystick demo](https://jsfiddle.net/aa0et7tr/5/)
-    * [My implementation](/home/doug/pico-projects/joystick/pure_js_joystick/combined.html)
-
-In order to examine and revise these, I first need to spin up on javascript and CSS [W3schools JS Tutorial](https://www.w3schools.com/js/default.asp)
-
-I like the bobboteck example but it has a lot of extra "cruft" associated with showing how to display multiple joysticks. The Google ad does a nice job of getting rid of the unwanted cruft but adds their own extra stuff.
-
-I copied the source of the Google page into the bobboteck folder [here](/home/doug/pico-projects/joystick/JoyStick-master/google_ad.html) and removed the Google Ad stuff while keeping the intrinsic simplicity of the code. It works fine and seems pretty clean.
-
-Next up, I want to try using this joystick to control the Pico-car.
-
-#### Other joystick projects
-
-![BT Controlled Tank](imgs/BT-controlled-tank.png)
-* [Send joystick data over BT](https://srituhobby.com/how-to-make-a-bluetooth-control-tank-with-raspberry-pi-pico-board/)
-
-## Learning more about javascript and REST APIs
-
-Looking at the javascript code in Bob Grant's code and the javascript code in the joystick examples makes me realize that I don't have a good fundamental understanding about how javascript works. To remedy this, I need to learn more about how javascript frontends work.
-
-* I found [Full Stack Python](https://www.fullstackpython.com/javascript.html) which has some links that look good.
-
-* Also found this RealPython tutorial [Python and REST APIs: Interacting With Web Services](https://realpython.com/api-integration-in-python/)
-
-* Also [Python REST API: Build and Deploy Your Own Custom Server](https://www.xingyulei.com/post/py-http-server/)
-
-* More Google searches on:
-    * "How to create REST API in Python without flask"
-    * "micropython rest api pico"
-* Decided to put the joystick idea *on the shelf* for now.
 
 ## Implement closed loop feedback motor speed control
 
