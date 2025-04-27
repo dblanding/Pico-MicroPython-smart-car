@@ -3,7 +3,7 @@
 ![pico car](imgs/pico-car.jpg)
 
 ### This Medium article by Dan McCreary [Raspberry Pi Pico Robot in Micropython](https://dmccreary.medium.com/raspberry-pi-pico-robot-in-micropython-51f956486270) inspired me to buiild a similar smart car project
-* Further details are presented at [base robot kit project](http://www.coderdojotc.org/micropython/robots/02-base-bot/)
+* Further details are presented at [base robot kit project](https://dmccreary.github.io/stem-robots/)
     * Discovered they use [MkDocs](https://www.mkdocs.org/getting-started/). May want to check this out sometime...
 
 ### My project will use **at least 2** of these time-of-flight VCSEL sensors
